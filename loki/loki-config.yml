@@ -1,0 +1,65 @@
+# Loki single-binary mode — filesystem chunk storage, TSDB index, compactor-
+# managed retention. Designed for a single small VM with low write volume from
+# the app's direct-push transport. Swap to S3/Blob + read/write replicas when
+# log volume outgrows local disk.
+
+auth_enabled: false   # single tenant; reverse proxy in front does auth.
+
+server:
+  http_listen_port: 3100
+  grpc_listen_port: 9095
+  log_level: warn
+
+common:
+  path_prefix: /loki
+  storage:
+    filesystem:
+      chunks_directory: /loki/chunks
+      rules_directory: /loki/rules
+  replication_factor: 1
+  ring:
+    kvstore:
+      store: inmemory
+
+schema_config:
+  configs:
+    - from: 2024-01-01
+      store: tsdb
+      object_store: filesystem
+      schema: v13
+      index:
+        prefix: loki_index_
+        period: 24h
+
+ingester:
+  chunk_idle_period: 5m
+  chunk_target_size: 1572864
+  max_chunk_age: 1h
+  wal:
+    enabled: true
+    dir: /loki/wal
+
+limits_config:
+  retention_period: 720h          # 30 days
+  reject_old_samples: true
+  reject_old_samples_max_age: 168h
+  max_query_series: 5000
+  ingestion_rate_mb: 8
+  ingestion_burst_size_mb: 16
+  # Conservative caps so a misbehaving app can't drown the small disk.
+  max_streams_per_user: 10000
+  max_line_size: 256kb
+
+compactor:
+  working_directory: /loki/compactor
+  compaction_interval: 10m
+  retention_enabled: true
+  retention_delete_delay: 2h
+  retention_delete_worker_count: 50
+  delete_request_store: filesystem
+
+ruler:
+  alertmanager_url: ""             # Alertmanager intentionally absent for phase 1.
+
+analytics:
+  reporting_enabled: false

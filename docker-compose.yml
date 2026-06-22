@@ -1,0 +1,113 @@
+# GlobalCodio monitoring stack — Grafana + Prometheus + Loki only.
+# Run from this directory:  docker compose up -d
+# All UI ports bind to 127.0.0.1; reach Grafana over a tunnel (Tailscale / Cloudflare /
+# SSH), never expose 3000/9090/3100 to the public internet.
+
+name: globalcodio-monitoring
+
+services:
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    container_name: monitoring-prometheus
+    restart: unless-stopped
+    user: "65534:65534"   # nobody — matches the image's expected uid
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=30d
+      - --web.enable-lifecycle           # /-/reload for SIGHUP-free reloads
+      - --web.console.libraries=/usr/share/prometheus/console_libraries
+      - --web.console.templates=/usr/share/prometheus/consoles
+    secrets:
+      - local_metrics_token
+      - dev_metrics_token
+      - uat_metrics_token
+      - prod_metrics_token
+    extra_hosts:
+      # Lets the Prometheus container reach the developer's host (the API on
+      # localhost:3001) via `host.docker.internal`. Native on Mac/Windows;
+      # `host-gateway` makes the same name work on Linux too.
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/targets:/etc/prometheus/targets:ro
+      - prom-data:/prometheus
+    ports:
+      - "127.0.0.1:9090:9090"
+    networks:
+      - monitoring
+
+  loki:
+    image: grafana/loki:3.2.1
+    container_name: monitoring-loki
+    restart: unless-stopped
+    user: "10001:10001"
+    command:
+      - -config.file=/etc/loki/loki-config.yml
+    volumes:
+      - ./loki/loki-config.yml:/etc/loki/loki-config.yml:ro
+      - loki-data:/loki
+    ports:
+      - "127.0.0.1:3100:3100"
+    networks:
+      - monitoring
+
+  grafana:
+    image: grafana/grafana:11.3.1
+    container_name: monitoring-grafana
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+      - loki
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GF_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GF_ADMIN_PASSWORD:?GF_ADMIN_PASSWORD must be set in .env}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      # Default role for OAuth-provisioned users; explicit Editors come via the email
+      # allowlist (configured under [auth.generic_oauth] / role_attribute_path).
+      GF_USERS_AUTO_ASSIGN_ORG_ROLE: Viewer
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      # Microsoft OAuth — fill these in .env when team SSO is wired.
+      # Leave empty to keep admin-only access.
+      GF_AUTH_GENERIC_OAUTH_ENABLED: ${GF_OAUTH_ENABLED:-false}
+      GF_AUTH_GENERIC_OAUTH_NAME: Microsoft
+      GF_AUTH_GENERIC_OAUTH_CLIENT_ID: ${GF_OAUTH_CLIENT_ID:-}
+      GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET: ${GF_OAUTH_CLIENT_SECRET:-}
+      GF_AUTH_GENERIC_OAUTH_SCOPES: openid email profile
+      GF_AUTH_GENERIC_OAUTH_AUTH_URL: ${GF_OAUTH_AUTH_URL:-}
+      GF_AUTH_GENERIC_OAUTH_TOKEN_URL: ${GF_OAUTH_TOKEN_URL:-}
+      GF_AUTH_GENERIC_OAUTH_API_URL: ${GF_OAUTH_API_URL:-}
+      GF_AUTH_GENERIC_OAUTH_ALLOW_ASSIGN_GRAFANA_ADMIN: "false"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    ports:
+      # Host port 3030 to avoid the apps/web Next.js dev server on 3000.
+      # Container still listens internally on 3000 (Grafana default).
+      - "127.0.0.1:3030:3000"
+    networks:
+      - monitoring
+
+networks:
+  monitoring:
+    driver: bridge
+
+volumes:
+  prom-data:
+  loki-data:
+  grafana-data:
+
+# Per-env scrape tokens — Prometheus mounts each at /run/secrets/<name> and the
+# scrape_configs reference them via `credentials_file`. Populated from .env;
+# leave blank for envs not yet onboarded (Prometheus tolerates missing files at
+# scrape time — the target shows DOWN).
+secrets:
+  local_metrics_token:
+    environment: LOCAL_METRICS_TOKEN
+  dev_metrics_token:
+    environment: DEV_METRICS_TOKEN
+  uat_metrics_token:
+    environment: UAT_METRICS_TOKEN
+  prod_metrics_token:
+    environment: PROD_METRICS_TOKEN

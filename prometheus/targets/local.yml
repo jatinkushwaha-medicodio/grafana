@@ -1,0 +1,14 @@
+# Local environment scrape target — Prometheus job `api-local` reads this file.
+#
+# `host.docker.internal` resolves to the developer's host machine from inside
+# the Prometheus container. On Mac/Windows it works out of the box; on Linux
+# the compose file adds `extra_hosts: host-gateway` so the same name resolves.
+#
+# Adjust the port if the API runs on something other than 3001.
+
+- targets:
+    - "host.docker.internal:3001"
+  labels:
+    env: local
+    service: api
+    region: local

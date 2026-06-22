@@ -1,0 +1,56 @@
+# Prometheus config — one job per environment so each env can use its own bearer
+# token via `authorization.credentials_file`. The actual list of target URLs per
+# env lives in targets/<env>.yml — edit those to onboard or move a target;
+# Prometheus auto-reloads (no restart).
+#
+# Tokens are read from env-files written to /run/secrets at container start
+# (mounted from the compose `.env`). credentials_file (not credentials) is used
+# so secrets never appear in the parsed config that /api/v1/status/config returns.
+
+global:
+  scrape_interval: 30s
+  scrape_timeout: 10s
+  evaluation_interval: 30s
+  external_labels:
+    cluster: globalcodio
+
+scrape_configs:
+  - job_name: api-local
+    metrics_path: /metrics
+    scheme: http                   # local dev usually runs on plain HTTP
+    authorization:
+      type: Bearer
+      credentials_file: /run/secrets/local_metrics_token
+    file_sd_configs:
+      - files: [/etc/prometheus/targets/local.yml]
+        refresh_interval: 1m
+
+  - job_name: api-dev
+    metrics_path: /metrics
+    scheme: https
+    authorization:
+      type: Bearer
+      credentials_file: /run/secrets/dev_metrics_token
+    file_sd_configs:
+      - files: [/etc/prometheus/targets/dev.yml]
+        refresh_interval: 1m
+
+  - job_name: api-uat
+    metrics_path: /metrics
+    scheme: https
+    authorization:
+      type: Bearer
+      credentials_file: /run/secrets/uat_metrics_token
+    file_sd_configs:
+      - files: [/etc/prometheus/targets/uat.yml]
+        refresh_interval: 1m
+
+  - job_name: api-prod
+    metrics_path: /metrics
+    scheme: https
+    authorization:
+      type: Bearer
+      credentials_file: /run/secrets/prod_metrics_token
+    file_sd_configs:
+      - files: [/etc/prometheus/targets/prod.yml]
+        refresh_interval: 1m

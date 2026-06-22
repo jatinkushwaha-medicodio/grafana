@@ -1,0 +1,11 @@
+# Prod environment scrape targets — Prometheus job `api-prod` reads this file.
+# Replace `REPLACE_ME` with the actual Prod API ingress hostname. ACA IP-
+# restriction must allowlist the monitoring VM's egress IP before this target
+# will go UP.
+
+- targets:
+    - "REPLACE_ME.azurecontainerapps.io"
+  labels:
+    env: prod
+    service: api
+    region: eus

@@ -1,0 +1,13 @@
+# Dev environment scrape targets — Prometheus job `api-dev` reads this file.
+# Replace `REPLACE_ME` with the actual host:port (or private-IP:port) of the
+# Dev API. Add additional entries for replicas if/when they exist.
+#
+# `labels` get attached to every series scraped from these targets. Keep
+# cardinality bounded — env / service / region only.
+
+- targets:
+    - "REPLACE_ME:3001"
+  labels:
+    env: dev
+    service: api
+    region: local

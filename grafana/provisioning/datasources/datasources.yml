@@ -1,0 +1,31 @@
+# Grafana datasource provisioning — applied on every container start. Hosts
+# resolve via Docker Compose's built-in DNS (service name = hostname). Anyone
+# editing in the UI is overridden on restart; commit changes here, not there.
+
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    uid: prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: false
+    jsonData:
+      timeInterval: 30s
+      httpMethod: POST
+
+  - name: Loki
+    uid: loki
+    type: loki
+    access: proxy
+    url: http://loki:3100
+    editable: false
+    jsonData:
+      maxLines: 5000
+      derivedFields:
+        - name: requestId
+          matcherRegex: '"requestId":"([^"]+)"'
+          datasourceUid: loki
+          url: '${__value.raw}'

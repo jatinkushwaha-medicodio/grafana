@@ -1,0 +1,10 @@
+# UAT environment scrape targets — Prometheus job `api-uat` reads this file.
+# Replace `REPLACE_ME` with the actual host:port (or private-IP:port) of the
+# UAT API.
+
+- targets:
+    - "REPLACE_ME:3001"
+  labels:
+    env: uat
+    service: api
+    region: local
