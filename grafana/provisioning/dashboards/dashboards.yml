@@ -8,9 +8,14 @@ providers:
     orgId: 1
     folder: GlobalCodio
     type: file
-    disableDeletion: true
+    # Cascade file deletion → live dashboard deletion. Keeps git as the single
+    # source of truth: `rm grafana/dashboards/<uid>.json` + push = gone everywhere.
+    disableDeletion: false
     updateIntervalSeconds: 10
-    allowUiUpdates: false
+    # UI edits allowed. Run `grr watch grafana/dashboards/` locally to auto-sync
+    # UI saves back to JSON files. Or use ./scripts/export-dashboard.sh manually.
+    # Read-only access for non-admins is enforced via Grafana roles, not this flag.
+    allowUiUpdates: true
     options:
       path: /var/lib/grafana/dashboards
       foldersFromFilesStructure: false

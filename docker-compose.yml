@@ -53,7 +53,8 @@ services:
       - monitoring
 
   grafana:
-    image: grafana/grafana:11.3.1
+    # 12.x required by grafanactl (CLI used in docs/dashboards.md).
+    image: grafana/grafana:12.0.2
     container_name: monitoring-grafana
     restart: unless-stopped
     depends_on:
