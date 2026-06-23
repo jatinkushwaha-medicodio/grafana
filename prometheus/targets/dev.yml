@@ -6,7 +6,7 @@
 # cardinality bounded — env / service / region only.
 
 - targets:
-    - "REPLACE_ME:3001"
+    - "api-dev.globalcodio.ai"
   labels:
     env: dev
     service: api

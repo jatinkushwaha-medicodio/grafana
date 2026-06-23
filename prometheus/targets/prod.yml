@@ -4,7 +4,7 @@
 # will go UP.
 
 - targets:
-    - "REPLACE_ME.azurecontainerapps.io"
+    - "api.globalcodio.ai"
   labels:
     env: prod
     service: api

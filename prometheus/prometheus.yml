@@ -22,7 +22,10 @@ scrape_configs:
       type: Bearer
       credentials_file: /run/secrets/local_metrics_token
     file_sd_configs:
-      - files: [/etc/prometheus/targets/local.yml]
+      # Glob matches local*.yml — present only on dev machines via
+      # docker-compose.override.yml. Absent on VM → 0 targets → silent
+      # (no `open: no such file` spam in Prometheus logs).
+      - files: [/etc/prometheus/targets/local*.yml]
         refresh_interval: 1m
 
   - job_name: api-dev

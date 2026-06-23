@@ -3,7 +3,7 @@
 # UAT API.
 
 - targets:
-    - "REPLACE_ME:3001"
+    - "api-uat.globalcodio.ai"
   labels:
     env: uat
     service: api

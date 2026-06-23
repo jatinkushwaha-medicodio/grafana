@@ -1,7 +1,15 @@
 # GlobalCodio monitoring stack — Grafana + Prometheus + Loki only.
-# Run from this directory:  docker compose up -d
-# All UI ports bind to 127.0.0.1; reach Grafana over a tunnel (Tailscale / Cloudflare /
-# SSH), never expose 3000/9090/3100 to the public internet.
+#
+# Local dev:  `docker compose up -d`
+#   → also loads docker-compose.override.yml automatically, which wires
+#     the local-only api-local scrape (host.docker.internal:3001).
+#
+# VM deploy:  `docker compose -f docker-compose.yml up -d`
+#   → skips the override so no api-local scrape, no extra_hosts.
+#   → only dev/uat/prod targets attempted (driven by targets/*.yml).
+#
+# All UI ports bind to 127.0.0.1 — put a reverse proxy in front for public
+# access (Caddy / nginx). Never expose 3000/9090/3100 publicly.
 
 name: globalcodio-monitoring
 
@@ -10,27 +18,25 @@ services:
     image: prom/prometheus:v2.55.1
     container_name: monitoring-prometheus
     restart: unless-stopped
-    user: "65534:65534"   # nobody — matches the image's expected uid
+    user: "65534:65534"
     command:
       - --config.file=/etc/prometheus/prometheus.yml
       - --storage.tsdb.path=/prometheus
       - --storage.tsdb.retention.time=30d
-      - --web.enable-lifecycle           # /-/reload for SIGHUP-free reloads
+      - --web.enable-lifecycle
       - --web.console.libraries=/usr/share/prometheus/console_libraries
       - --web.console.templates=/usr/share/prometheus/consoles
     secrets:
-      - local_metrics_token
       - dev_metrics_token
       - uat_metrics_token
       - prod_metrics_token
-    extra_hosts:
-      # Lets the Prometheus container reach the developer's host (the API on
-      # localhost:3001) via `host.docker.internal`. Native on Mac/Windows;
-      # `host-gateway` makes the same name work on Linux too.
-      - "host.docker.internal:host-gateway"
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - ./prometheus/targets:/etc/prometheus/targets:ro
+      # Per-file mounts (not whole dir) so the local-only target file from the
+      # repo never ships to the VM. Override file adds `local.yml` on dev machines.
+      - ./prometheus/targets/dev.yml:/etc/prometheus/targets/dev.yml:ro
+      - ./prometheus/targets/uat.yml:/etc/prometheus/targets/uat.yml:ro
+      - ./prometheus/targets/prod.yml:/etc/prometheus/targets/prod.yml:ro
       - prom-data:/prometheus
     ports:
       - "127.0.0.1:9090:9090"
@@ -66,12 +72,9 @@ services:
       # Public Grafana URL used in OAuth callbacks. Empty = falls back to localhost.
       GF_SERVER_ROOT_URL: ${GF_SERVER_ROOT_URL:-http://localhost:3030}
       GF_USERS_ALLOW_SIGN_UP: "false"
-      # Default role for OAuth-provisioned users; explicit Editors come via the email
-      # allowlist (configured under [auth.generic_oauth] / role_attribute_path).
       GF_USERS_AUTO_ASSIGN_ORG_ROLE: Viewer
       GF_AUTH_ANONYMOUS_ENABLED: "false"
-      # Microsoft OAuth — fill these in .env when team SSO is wired.
-      # Leave empty to keep admin-only access.
+      # Microsoft OAuth — populated from .env when team SSO is wired.
       GF_AUTH_GENERIC_OAUTH_ENABLED: ${GF_OAUTH_ENABLED:-false}
       GF_AUTH_GENERIC_OAUTH_NAME: Microsoft
       GF_AUTH_GENERIC_OAUTH_CLIENT_ID: ${GF_OAUTH_CLIENT_ID:-}
@@ -81,9 +84,7 @@ services:
       GF_AUTH_GENERIC_OAUTH_TOKEN_URL: ${GF_OAUTH_TOKEN_URL:-}
       GF_AUTH_GENERIC_OAUTH_API_URL: ${GF_OAUTH_API_URL:-}
       GF_AUTH_GENERIC_OAUTH_ALLOW_ASSIGN_GRAFANA_ADMIN: "false"
-      # Teams webhooks for alerting — one channel per env. Read by
-      # provisioning/alerting/contact-points.yml. Empty value disables that
-      # receiver (Grafana will still load, just won't deliver to that channel).
+      # Teams webhooks for alerting — one channel per env.
       TEAMS_WEBHOOK_URL_DEV: ${TEAMS_WEBHOOK_URL_DEV:-}
       TEAMS_WEBHOOK_URL_UAT: ${TEAMS_WEBHOOK_URL_UAT:-}
       TEAMS_WEBHOOK_URL_PROD: ${TEAMS_WEBHOOK_URL_PROD:-}
@@ -107,13 +108,11 @@ volumes:
   loki-data:
   grafana-data:
 
-# Per-env scrape tokens — Prometheus mounts each at /run/secrets/<name> and the
-# scrape_configs reference them via `credentials_file`. Populated from .env;
-# leave blank for envs not yet onboarded (Prometheus tolerates missing files at
-# scrape time — the target shows DOWN).
+# Per-env scrape tokens for Prometheus. Each is mounted at /run/secrets/<name>
+# inside the prometheus container and referenced by `credentials_file` in
+# prometheus.yml. Populated from .env. Empty value = empty file = target stays
+# DOWN with auth error (harmless to other targets).
 secrets:
-  local_metrics_token:
-    environment: LOCAL_METRICS_TOKEN
   dev_metrics_token:
     environment: DEV_METRICS_TOKEN
   uat_metrics_token:
