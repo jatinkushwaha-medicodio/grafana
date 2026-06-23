@@ -1,0 +1,179 @@
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: api-golden-signals
+    folder: GlobalCodio Alerts
+    interval: 1m
+    rules:
+      # ── 1. 5xx spike ─────────────────────────────────────────────────────
+      - uid: api_5xx_spike
+        title: API 5xx spike
+        condition: B
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              refId: A
+              editorMode: code
+              expr: 'sum(rate(http_express_req_res_time_count{status_code=~"5..",service="api"}[5m]))'
+              instant: true
+              range: false
+              intervalMs: 1000
+              maxDataPoints: 43200
+          - refId: B
+            relativeTimeRange:
+              from: 0
+              to: 0
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: gt, params: [0.1] }
+                  operator: { type: and }
+                  query: { params: [A] }
+                  reducer: { type: last, params: [] }
+                  type: query
+        for: 2m
+        noDataState: OK
+        execErrState: Error
+        labels:
+          severity: critical
+          service: api
+        annotations:
+          summary: 'API 5xx spike — {{ $values.A.Value | printf "%.3f" }} req/s'
+          description: 'Rate of 5xx on service=api exceeded 0.1/s for 2m. Check error logs in API Overview dashboard.'
+
+      # ── 2. p95 latency high ──────────────────────────────────────────────
+      - uid: api_p95_latency_high
+        title: API p95 latency high
+        condition: B
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              refId: A
+              editorMode: code
+              expr: 'histogram_quantile(0.95, sum by (le) (rate(api_http_request_duration_seconds_bucket{service="api"}[5m])))'
+              instant: true
+              range: false
+              intervalMs: 1000
+              maxDataPoints: 43200
+          - refId: B
+            relativeTimeRange:
+              from: 0
+              to: 0
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: gt, params: [1] }
+                  operator: { type: and }
+                  query: { params: [A] }
+                  reducer: { type: last, params: [] }
+                  type: query
+        for: 5m
+        noDataState: OK
+        execErrState: Error
+        labels:
+          severity: warning
+          service: api
+        annotations:
+          summary: 'API p95 latency > 1s ({{ $values.A.Value | printf "%.2f" }}s)'
+          description: 'Sustained slow responses on service=api for 5m. Inspect "p95 latency per endpoint" panel.'
+
+      # ── 3. High CPU ──────────────────────────────────────────────────────
+      - uid: api_high_cpu
+        title: API high CPU
+        condition: B
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              refId: A
+              editorMode: code
+              expr: 'sum(rate(process_cpu_user_seconds_total{service="api"}[5m]) + rate(process_cpu_system_seconds_total{service="api"}[5m]))'
+              instant: true
+              range: false
+              intervalMs: 1000
+              maxDataPoints: 43200
+          - refId: B
+            relativeTimeRange:
+              from: 0
+              to: 0
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: gt, params: [0.7] }
+                  operator: { type: and }
+                  query: { params: [A] }
+                  reducer: { type: last, params: [] }
+                  type: query
+        for: 10m
+        noDataState: OK
+        execErrState: Error
+        labels:
+          severity: warning
+          service: api
+        annotations:
+          summary: 'API CPU > 70% ({{ $values.A.Value | printf "%.2f" }})'
+          description: 'CPU usage on service=api over 70% for 10m. Investigate hot endpoints.'
+
+      # ── 4. High heap ─────────────────────────────────────────────────────
+      - uid: api_high_heap
+        title: API high heap
+        condition: B
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              refId: A
+              editorMode: code
+              expr: 'max(nodejs_heap_size_used_bytes{service="api"} / clamp_min(nodejs_heap_size_total_bytes{service="api"}, 1))'
+              instant: true
+              range: false
+              intervalMs: 1000
+              maxDataPoints: 43200
+          - refId: B
+            relativeTimeRange:
+              from: 0
+              to: 0
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: gt, params: [0.85] }
+                  operator: { type: and }
+                  query: { params: [A] }
+                  reducer: { type: last, params: [] }
+                  type: query
+        for: 5m
+        noDataState: OK
+        execErrState: Error
+        labels:
+          severity: warning
+          service: api
+        annotations:
+          summary: 'API heap > 85% (ratio {{ $values.A.Value | printf "%.2f" }})'
+          description: 'Heap usage on service=api over 85% for 5m. OOM risk.'

@@ -63,6 +63,8 @@ services:
     environment:
       GF_SECURITY_ADMIN_USER: ${GF_ADMIN_USER:-admin}
       GF_SECURITY_ADMIN_PASSWORD: ${GF_ADMIN_PASSWORD:?GF_ADMIN_PASSWORD must be set in .env}
+      # Public Grafana URL used in OAuth callbacks. Empty = falls back to localhost.
+      GF_SERVER_ROOT_URL: ${GF_SERVER_ROOT_URL:-http://localhost:3030}
       GF_USERS_ALLOW_SIGN_UP: "false"
       # Default role for OAuth-provisioned users; explicit Editors come via the email
       # allowlist (configured under [auth.generic_oauth] / role_attribute_path).
@@ -79,6 +81,12 @@ services:
       GF_AUTH_GENERIC_OAUTH_TOKEN_URL: ${GF_OAUTH_TOKEN_URL:-}
       GF_AUTH_GENERIC_OAUTH_API_URL: ${GF_OAUTH_API_URL:-}
       GF_AUTH_GENERIC_OAUTH_ALLOW_ASSIGN_GRAFANA_ADMIN: "false"
+      # Teams webhooks for alerting — one channel per env. Read by
+      # provisioning/alerting/contact-points.yml. Empty value disables that
+      # receiver (Grafana will still load, just won't deliver to that channel).
+      TEAMS_WEBHOOK_URL_DEV: ${TEAMS_WEBHOOK_URL_DEV:-}
+      TEAMS_WEBHOOK_URL_UAT: ${TEAMS_WEBHOOK_URL_UAT:-}
+      TEAMS_WEBHOOK_URL_PROD: ${TEAMS_WEBHOOK_URL_PROD:-}
     volumes:
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
       - ./grafana/dashboards:/var/lib/grafana/dashboards:ro

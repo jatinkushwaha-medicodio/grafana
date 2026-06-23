@@ -1,0 +1,42 @@
+apiVersion: 1
+
+# One contact point per env. URL secrets come from the container env at
+# provisioning time (see docker-compose.yml + .env). Empty URL = receiver still
+# registered but delivery is a no-op until the URL is set.
+
+contactPoints:
+  - orgId: 1
+    name: teams-dev
+    receivers:
+      - uid: teams_dev_001
+        type: teams
+        settings:
+          url: $TEAMS_WEBHOOK_URL_DEV
+          title: '{{ template "default.title" . }}'
+          sectiontitle: ''
+          message: '{{ template "default.message" . }}'
+        disableResolveMessage: false
+
+  - orgId: 1
+    name: teams-uat
+    receivers:
+      - uid: teams_uat_001
+        type: teams
+        settings:
+          url: $TEAMS_WEBHOOK_URL_UAT
+          title: '{{ template "default.title" . }}'
+          sectiontitle: ''
+          message: '{{ template "default.message" . }}'
+        disableResolveMessage: false
+
+  - orgId: 1
+    name: teams-prod
+    receivers:
+      - uid: teams_prod_001
+        type: teams
+        settings:
+          url: $TEAMS_WEBHOOK_URL_PROD
+          title: '{{ template "default.title" . }}'
+          sectiontitle: ''
+          message: '{{ template "default.message" . }}'
+        disableResolveMessage: false
