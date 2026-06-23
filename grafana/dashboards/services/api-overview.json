@@ -1430,7 +1430,7 @@
           "type": "prometheus",
           "uid": "prometheus"
         },
-        "definition": "label_values(http_express_req_res_time_count, env)",
+        "definition": "label_values(up, env)",
         "hide": 0,
         "includeAll": false,
         "label": "env",
@@ -1438,10 +1438,10 @@
         "name": "env",
         "options": [],
         "query": {
-          "query": "label_values(http_express_req_res_time_count, env)",
+          "query": "label_values(up, env)",
           "refId": "StandardVariableQuery"
         },
-        "refresh": 2,
+        "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
         "sort": 1,
@@ -1456,7 +1456,7 @@
           "type": "prometheus",
           "uid": "prometheus"
         },
-        "definition": "label_values(http_express_req_res_time_count{env=~\"$env\"}, service)",
+        "definition": "label_values(up{env=~\"$env\"}, service)",
         "hide": 0,
         "includeAll": false,
         "label": "service",
@@ -1464,10 +1464,10 @@
         "name": "service",
         "options": [],
         "query": {
-          "query": "label_values(http_express_req_res_time_count{env=~\"$env\"}, service)",
+          "query": "label_values(up{env=~\"$env\"}, service)",
           "refId": "StandardVariableQuery"
         },
-        "refresh": 2,
+        "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
         "sort": 1,
@@ -1483,6 +1483,6 @@
   "timezone": "browser",
   "title": "API Overview",
   "uid": "service-api-overview",
-  "version": 5020,
+  "version": 7000,
   "weekStart": ""
 }
