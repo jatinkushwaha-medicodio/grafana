@@ -1423,55 +1423,57 @@
     "list": [
       {
         "current": {
-          "text": "local",
-          "value": "local"
+          "text": "All",
+          "value": "$__all"
         },
         "datasource": {
           "type": "prometheus",
           "uid": "prometheus"
         },
-        "definition": "label_values(http_express_req_res_time_count, env)",
+        "definition": "label_values(up, env)",
         "hide": 0,
-        "includeAll": false,
+        "includeAll": true,
         "label": "env",
         "multi": false,
         "name": "env",
         "options": [],
         "query": {
-          "query": "label_values(http_express_req_res_time_count, env)",
+          "query": "label_values(up, env)",
           "refId": "StandardVariableQuery"
         },
-        "refresh": 2,
+        "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
         "sort": 1,
-        "type": "query"
+        "type": "query",
+        "allValue": ".+"
       },
       {
         "current": {
-          "text": "api",
-          "value": "api"
+          "text": "All",
+          "value": "$__all"
         },
         "datasource": {
           "type": "prometheus",
           "uid": "prometheus"
         },
-        "definition": "label_values(http_express_req_res_time_count{env=~\"$env\"}, service)",
+        "definition": "label_values(up{env=~\"$env\"}, service)",
         "hide": 0,
-        "includeAll": false,
+        "includeAll": true,
         "label": "service",
         "multi": false,
         "name": "service",
         "options": [],
         "query": {
-          "query": "label_values(http_express_req_res_time_count{env=~\"$env\"}, service)",
+          "query": "label_values(up{env=~\"$env\"}, service)",
           "refId": "StandardVariableQuery"
         },
-        "refresh": 2,
+        "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
         "sort": 1,
-        "type": "query"
+        "type": "query",
+        "allValue": ".+"
       }
     ]
   },
@@ -1483,6 +1485,6 @@
   "timezone": "browser",
   "title": "API Overview",
   "uid": "service-api-overview",
-  "version": 5020,
+  "version": 7100,
   "weekStart": ""
 }
