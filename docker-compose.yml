@@ -54,7 +54,7 @@ services:
       - ./loki/loki-config.yml:/etc/loki/loki-config.yml:ro
       - loki-data:/loki
     ports:
-      - "127.0.0.1:3100:3100"
+      - "127.0.0.1:3033:3100"
     networks:
       - monitoring
 
