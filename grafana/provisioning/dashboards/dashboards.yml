@@ -15,7 +15,7 @@ providers:
     # UI edits allowed. Run `grr watch grafana/dashboards/` locally to auto-sync
     # UI saves back to JSON files. Or use ./scripts/export-dashboard.sh manually.
     # Read-only access for non-admins is enforced via Grafana roles, not this flag.
-    allowUiUpdates: false
+    allowUiUpdates: true
     options:
       path: /var/lib/grafana/dashboards
       foldersFromFilesStructure: true
