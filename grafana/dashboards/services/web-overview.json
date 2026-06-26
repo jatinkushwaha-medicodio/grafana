@@ -1,0 +1,68 @@
+{
+  "annotations": {"list": [{"builtIn": 1, "datasource": {"type": "datasource", "uid": "grafana"}, "enable": true, "hide": true, "iconColor": "rgba(0, 211, 255, 1)", "name": "Annotations & Alerts", "type": "dashboard"}]},
+  "description": "Web Vitals (LCP/CLS/INP/FID/TTFB) from browser RUM beacons. Filter by $env.",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {"id": 100, "type": "row", "title": "Core Web Vitals — current p75", "collapsed": false, "gridPos": {"h": 1, "w": 24, "x": 0, "y": 0}, "panels": []},
+
+    {"id": 1, "type": "stat", "title": "LCP p75", "datasource": {"type": "loki", "uid": "loki"}, "gridPos": {"h": 5, "w": 8, "x": 0, "y": 1}, "fieldConfig": {"defaults": {"unit": "ms", "color": {"mode": "thresholds"}, "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "orange", "value": 2500}, {"color": "red", "value": 4000}]}}, "overrides": []}, "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "value", "graphMode": "area"}, "targets": [{"datasource": {"type": "loki", "uid": "loki"}, "expr": "quantile_over_time(0.75, {service=\"api\",env=~\"$env\"} | json | event=\"rum.web-vital\" | metric=\"LCP\" | unwrap value [$__range])", "queryType": "range", "refId": "A"}]},
+
+    {"id": 2, "type": "stat", "title": "CLS p75", "datasource": {"type": "loki", "uid": "loki"}, "gridPos": {"h": 5, "w": 8, "x": 8, "y": 1}, "fieldConfig": {"defaults": {"unit": "none", "decimals": 3, "color": {"mode": "thresholds"}, "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "orange", "value": 0.1}, {"color": "red", "value": 0.25}]}}, "overrides": []}, "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "value", "graphMode": "area"}, "targets": [{"datasource": {"type": "loki", "uid": "loki"}, "expr": "quantile_over_time(0.75, {service=\"api\",env=~\"$env\"} | json | event=\"rum.web-vital\" | metric=\"CLS\" | unwrap value [$__range])", "queryType": "range", "refId": "A"}]},
+
+    {"id": 3, "type": "stat", "title": "INP p75", "datasource": {"type": "loki", "uid": "loki"}, "gridPos": {"h": 5, "w": 8, "x": 16, "y": 1}, "fieldConfig": {"defaults": {"unit": "ms", "color": {"mode": "thresholds"}, "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "orange", "value": 200}, {"color": "red", "value": 500}]}}, "overrides": []}, "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "value", "graphMode": "area"}, "targets": [{"datasource": {"type": "loki", "uid": "loki"}, "expr": "quantile_over_time(0.75, {service=\"api\",env=~\"$env\"} | json | event=\"rum.web-vital\" | metric=\"INP\" | unwrap value [$__range])", "queryType": "range", "refId": "A"}]},
+
+    {"id": 4, "type": "stat", "title": "TTFB p75", "datasource": {"type": "loki", "uid": "loki"}, "gridPos": {"h": 5, "w": 8, "x": 0, "y": 6}, "fieldConfig": {"defaults": {"unit": "ms", "color": {"mode": "thresholds"}, "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "orange", "value": 800}, {"color": "red", "value": 1800}]}}, "overrides": []}, "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "value", "graphMode": "area"}, "targets": [{"datasource": {"type": "loki", "uid": "loki"}, "expr": "quantile_over_time(0.75, {service=\"api\",env=~\"$env\"} | json | event=\"rum.web-vital\" | metric=\"TTFB\" | unwrap value [$__range])", "queryType": "range", "refId": "A"}]},
+
+    {"id": 5, "type": "stat", "title": "FCP p75", "datasource": {"type": "loki", "uid": "loki"}, "gridPos": {"h": 5, "w": 8, "x": 8, "y": 6}, "fieldConfig": {"defaults": {"unit": "ms", "color": {"mode": "thresholds"}, "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "orange", "value": 1800}, {"color": "red", "value": 3000}]}}, "overrides": []}, "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "value", "graphMode": "area"}, "targets": [{"datasource": {"type": "loki", "uid": "loki"}, "expr": "quantile_over_time(0.75, {service=\"api\",env=~\"$env\"} | json | event=\"rum.web-vital\" | metric=\"FCP\" | unwrap value [$__range])", "queryType": "range", "refId": "A"}]},
+
+    {"id": 6, "type": "stat", "title": "Samples", "datasource": {"type": "loki", "uid": "loki"}, "gridPos": {"h": 5, "w": 8, "x": 16, "y": 6}, "fieldConfig": {"defaults": {"unit": "short"}, "overrides": []}, "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "value", "graphMode": "area"}, "targets": [{"datasource": {"type": "loki", "uid": "loki"}, "expr": "sum(count_over_time({service=\"api\",env=~\"$env\"} | json | event=\"rum.web-vital\" [$__range]))", "queryType": "range", "refId": "A"}]},
+
+    {"id": 110, "type": "row", "title": "Trends", "collapsed": false, "gridPos": {"h": 1, "w": 24, "x": 0, "y": 11}, "panels": []},
+
+    {"id": 10, "type": "timeseries", "title": "LCP p75 over time (per route)", "datasource": {"type": "loki", "uid": "loki"}, "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12}, "fieldConfig": {"defaults": {"unit": "ms", "color": {"mode": "palette-classic"}, "custom": {"drawStyle": "line", "lineWidth": 1, "fillOpacity": 0}, "thresholds": {"mode": "absolute", "steps": [{"color": "transparent", "value": null}, {"color": "orange", "value": 2500}, {"color": "red", "value": 4000}]}}, "overrides": []}, "options": {"legend": {"displayMode": "table", "placement": "right", "calcs": ["lastNotNull", "max"]}, "tooltip": {"mode": "multi", "sort": "desc"}}, "targets": [{"datasource": {"type": "loki", "uid": "loki"}, "expr": "quantile_over_time(0.75, {service=\"api\",env=~\"$env\"} | json | event=\"rum.web-vital\" | metric=\"LCP\" | unwrap value [$__interval]) by (path)", "legendFormat": "{{path}}", "queryType": "range", "refId": "A"}]},
+
+    {"id": 11, "type": "timeseries", "title": "INP p75 over time (per route)", "datasource": {"type": "loki", "uid": "loki"}, "gridPos": {"h": 8, "w": 12, "x": 12, "y": 12}, "fieldConfig": {"defaults": {"unit": "ms", "color": {"mode": "palette-classic"}, "custom": {"drawStyle": "line", "lineWidth": 1, "fillOpacity": 0}}, "overrides": []}, "options": {"legend": {"displayMode": "table", "placement": "right", "calcs": ["lastNotNull", "max"]}, "tooltip": {"mode": "multi", "sort": "desc"}}, "targets": [{"datasource": {"type": "loki", "uid": "loki"}, "expr": "quantile_over_time(0.75, {service=\"api\",env=~\"$env\"} | json | event=\"rum.web-vital\" | metric=\"INP\" | unwrap value [$__interval]) by (path)", "legendFormat": "{{path}}", "queryType": "range", "refId": "A"}]},
+
+    {"id": 12, "type": "timeseries", "title": "Rating distribution (LCP)", "datasource": {"type": "loki", "uid": "loki"}, "gridPos": {"h": 8, "w": 24, "x": 0, "y": 20}, "fieldConfig": {"defaults": {"unit": "short", "color": {"mode": "palette-classic"}, "custom": {"drawStyle": "bars", "lineWidth": 1, "fillOpacity": 70, "stacking": {"mode": "normal", "group": "A"}}}, "overrides": [
+      {"matcher": {"id": "byName", "options": "good"}, "properties": [{"id": "color", "value": {"mode": "fixed", "fixedColor": "green"}}]},
+      {"matcher": {"id": "byName", "options": "needs-improvement"}, "properties": [{"id": "color", "value": {"mode": "fixed", "fixedColor": "orange"}}]},
+      {"matcher": {"id": "byName", "options": "poor"}, "properties": [{"id": "color", "value": {"mode": "fixed", "fixedColor": "red"}}]}
+    ]}, "options": {"legend": {"displayMode": "list", "placement": "right"}, "tooltip": {"mode": "multi", "sort": "desc"}}, "targets": [{"datasource": {"type": "loki", "uid": "loki"}, "expr": "sum by (rating) (count_over_time({service=\"api\",env=~\"$env\"} | json | event=\"rum.web-vital\" | metric=\"LCP\" [$__interval]))", "legendFormat": "{{rating}}", "queryType": "range", "refId": "A"}]},
+
+    {"id": 120, "type": "row", "title": "Per-route table", "collapsed": false, "gridPos": {"h": 1, "w": 24, "x": 0, "y": 28}, "panels": []},
+
+    {"id": 50, "type": "table", "title": "Routes — LCP / INP / CLS p75 + sample count", "datasource": {"type": "loki", "uid": "loki"}, "gridPos": {"h": 12, "w": 24, "x": 0, "y": 29}, "fieldConfig": {"defaults": {"custom": {"align": "auto"}}, "overrides": [
+      {"matcher": {"id": "byName", "options": "LCP"}, "properties": [{"id": "unit", "value": "ms"}, {"id": "thresholds", "value": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "orange", "value": 2500}, {"color": "red", "value": 4000}]}}, {"id": "custom.cellOptions", "value": {"type": "color-text"}}]},
+      {"matcher": {"id": "byName", "options": "INP"}, "properties": [{"id": "unit", "value": "ms"}, {"id": "thresholds", "value": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "orange", "value": 200}, {"color": "red", "value": 500}]}}, {"id": "custom.cellOptions", "value": {"type": "color-text"}}]},
+      {"matcher": {"id": "byName", "options": "CLS"}, "properties": [{"id": "decimals", "value": 3}, {"id": "thresholds", "value": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "orange", "value": 0.1}, {"color": "red", "value": 0.25}]}}, {"id": "custom.cellOptions", "value": {"type": "color-text"}}]},
+      {"matcher": {"id": "byName", "options": "samples"}, "properties": [{"id": "unit", "value": "short"}]}
+    ]}, "options": {"showHeader": true, "sortBy": [{"displayName": "LCP", "desc": true}]}, "transformations": [
+      {"id": "merge"},
+      {"id": "organize", "options": {"excludeByName": {"Time": true, "metric": true, "service": true, "env": true, "level": true}, "indexByName": {"path": 0, "Value #A": 1, "Value #B": 2, "Value #C": 3, "Value #D": 4}, "renameByName": {"path": "Endpoint", "Value #A": "LCP", "Value #B": "INP", "Value #C": "CLS", "Value #D": "samples"}}}
+    ], "targets": [
+      {"datasource": {"type": "loki", "uid": "loki"}, "expr": "quantile_over_time(0.75, {service=\"api\",env=~\"$env\"} | json | event=\"rum.web-vital\" | metric=\"LCP\" | unwrap value [$__range]) by (path)", "queryType": "instant", "refId": "A"},
+      {"datasource": {"type": "loki", "uid": "loki"}, "expr": "quantile_over_time(0.75, {service=\"api\",env=~\"$env\"} | json | event=\"rum.web-vital\" | metric=\"INP\" | unwrap value [$__range]) by (path)", "queryType": "instant", "refId": "B"},
+      {"datasource": {"type": "loki", "uid": "loki"}, "expr": "quantile_over_time(0.75, {service=\"api\",env=~\"$env\"} | json | event=\"rum.web-vital\" | metric=\"CLS\" | unwrap value [$__range]) by (path)", "queryType": "instant", "refId": "C"},
+      {"datasource": {"type": "loki", "uid": "loki"}, "expr": "sum by (path) (count_over_time({service=\"api\",env=~\"$env\"} | json | event=\"rum.web-vital\" [$__range]))", "queryType": "instant", "refId": "D"}
+    ]}
+  ],
+  "refresh": "30s",
+  "schemaVersion": 41,
+  "tags": ["globalcodio", "web", "rum"],
+  "templating": {
+    "list": [
+      {"current": {"text": "local", "value": "local"}, "datasource": {"type": "prometheus", "uid": "prometheus"}, "definition": "label_values(api_http_request_duration_milliseconds_count, env)", "hide": 0, "includeAll": false, "label": "env", "multi": false, "name": "env", "options": [], "query": {"query": "label_values(api_http_request_duration_milliseconds_count, env)", "refId": "StandardVariableQuery"}, "refresh": 2, "regex": "", "skipUrlSync": false, "sort": 1, "type": "query"}
+    ]
+  },
+  "time": {"from": "now-1h", "to": "now"},
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Web Overview",
+  "uid": "service-web-overview",
+  "version": 1,
+  "weekStart": ""
+}
