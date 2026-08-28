@@ -39,25 +39,26 @@ scrape_configs:
       - files: [/etc/prometheus/targets/app-dev.yml]
         refresh_interval: 1m
 
-  - job_name: app-uat
-    metrics_path: /metrics
-    scheme: http
-    authorization:
-      type: Bearer
-      credentials_file: /run/secrets/uat_metrics_token
-    file_sd_configs:
-      - files: [/etc/prometheus/targets/app-uat.yml]
-        refresh_interval: 1m
-
-  - job_name: app-prod
-    metrics_path: /metrics
-    scheme: https
-    authorization:
-      type: Bearer
-      credentials_file: /run/secrets/prod_metrics_token
-    file_sd_configs:
-      - files: [/etc/prometheus/targets/app-prod.yml]
-        refresh_interval: 1m
+  # UAT + PROD scrape jobs disabled until those envs are wired.
+  # - job_name: app-uat
+  #   metrics_path: /metrics
+  #   scheme: http
+  #   authorization:
+  #     type: Bearer
+  #     credentials_file: /run/secrets/uat_metrics_token
+  #   file_sd_configs:
+  #     - files: [/etc/prometheus/targets/app-uat.yml]
+  #       refresh_interval: 1m
+  #
+  # - job_name: app-prod
+  #   metrics_path: /metrics
+  #   scheme: https
+  #   authorization:
+  #     type: Bearer
+  #     credentials_file: /run/secrets/prod_metrics_token
+  #   file_sd_configs:
+  #     - files: [/etc/prometheus/targets/app-prod.yml]
+  #       refresh_interval: 1m
 
   # ── 2. VM host metrics (node_exporter) ──────────────────────────────────
   # Single shared VM: dev + uat app containers + this monitoring stack all
