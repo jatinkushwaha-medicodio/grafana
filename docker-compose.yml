@@ -53,11 +53,17 @@ services:
   # Host metrics for the VM this stack runs on (CPU / mem / disk / uptime).
   # Reads /proc + /sys from the host via bind mounts. `pid: host` lets it see
   # every process, not just the ones inside its own PID namespace.
+  #
+  # Behind the `vm` profile so local `docker compose up -d` skips it
+  # (macOS Docker Desktop rejects the rslave propagation and container
+  # metrics against Docker Desktop's VM would be useless anyway).
+  # VM deploy runs `docker compose --profile vm up -d`.
   node-exporter:
     image: prom/node-exporter:v1.8.2
     container_name: monitoring-node-exporter
     restart: unless-stopped
     pid: host
+    profiles: ["vm"]
     command:
       - --path.rootfs=/host
       - --path.procfs=/host/proc
