@@ -4,7 +4,7 @@
   "tags": ["medicodio"],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 2,
+  "version": 3,
   "refresh": "30s",
   "time": { "from": "now-1h", "to": "now" },
   "templating": {
@@ -88,10 +88,25 @@
       "fieldConfig": { "defaults": { "unit": "decmbytes" } }
     },
     {
+      "id": 10,
+      "title": "Process CPU (cores)",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 14, "w": 12, "h": 6 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "rate(app_process_cpu_seconds_total{env=~\"$env\"}[5m])",
+          "legendFormat": "{{env}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "none", "min": 0 } }
+    },
+    {
       "id": 5,
       "title": "Event-loop lag (s)",
       "type": "timeseries",
-      "gridPos": { "x": 0, "y": 14, "w": 12, "h": 6 },
+      "gridPos": { "x": 12, "y": 14, "w": 12, "h": 6 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
@@ -106,7 +121,7 @@
       "id": 6,
       "title": "Job last success (min ago)",
       "type": "table",
-      "gridPos": { "x": 12, "y": 14, "w": 12, "h": 6 },
+      "gridPos": { "x": 0, "y": 20, "w": 12, "h": 6 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
@@ -121,7 +136,7 @@
       "id": 7,
       "title": "Job runs — last 1h",
       "type": "table",
-      "gridPos": { "x": 0, "y": 20, "w": 12, "h": 6 },
+      "gridPos": { "x": 0, "y": 26, "w": 12, "h": 6 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
@@ -150,7 +165,7 @@
       "id": 9,
       "title": "Logs",
       "type": "logs",
-      "gridPos": { "x": 0, "y": 26, "w": 24, "h": 10 },
+      "gridPos": { "x": 0, "y": 32, "w": 24, "h": 10 },
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
