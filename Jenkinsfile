@@ -95,7 +95,7 @@ pipeline {
               curl -sf http://127.0.0.1:3030/api/health
 
               echo "--- volume status (sanity) ---"
-              docker volume ls --filter name=globalcodio-monitoring_
+              docker volume ls --filter name=medicodio-monitoring_
 EOF
           '''
         }

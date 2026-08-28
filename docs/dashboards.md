@@ -4,8 +4,7 @@ Source of truth = `grafana/dashboards/**/*.json` in git. Folder layout:
 
 ```
 grafana/dashboards/
-├── common/        ← cross-service (Global Overview)
-└── services/      ← per-service (API Overview, agent later, …)
+└── medicodio/     ← all Medicodio dashboards (App Health, VM Health, PROD, Logs)
 ```
 
 Grafana provisioner reads these on startup + every 10s after.
@@ -17,7 +16,7 @@ Grafana provisioner reads these on startup + every 10s after.
 After you edit + **Save** in the Grafana UI:
 
 ```bash
-cd ~/code/global/global-monitoring
+cd ~/code/whitefield/monitoring
 
 # Pull every tracked dashboard's latest UI state at once
 ./scripts/sync-all-dashboards.sh
@@ -42,9 +41,11 @@ preserved. New UI-only dashboards (no file in git yet) are **not** picked up
 
 Find a dashboard's UID in the URL: `http://localhost:3030/d/<uid>/<slug>`.
 
-Common UIDs:
-- `service-api-overview` → `grafana/dashboards/services/api-overview.json`
-- `common-global-overview` → `grafana/dashboards/common/global-overview.json`
+Dashboards (populated in Phase 1d):
+- `medicodio-app-health` → `grafana/dashboards/medicodio/app-health.json`
+- `medicodio-vm-health` → `grafana/dashboards/medicodio/vm-health.json`
+- `medicodio-prod-focus` → `grafana/dashboards/medicodio/prod-focus.json`
+- `medicodio-logs-explorer` → `grafana/dashboards/medicodio/logs-explorer.json`
 
 ---
 
@@ -52,15 +53,15 @@ Common UIDs:
 
 ```bash
 ./scripts/import-dashboard.sh <grafana-com-id> <new-uid>
-mv grafana/dashboards/<new-uid>.json grafana/dashboards/services/    # or common/
-git add grafana/dashboards/services/<new-uid>.json
+mv grafana/dashboards/<new-uid>.json grafana/dashboards/medicodio/
+git add grafana/dashboards/medicodio/<new-uid>.json
 git commit -m "monitoring: add <name> (<id>)"
 git push
 ```
 
 Browse IDs at <https://grafana.com/grafana/dashboards/>. The script sanitises
 the JSON (strips import metadata, wires our `prometheus` / `loki` datasource
-UIDs, tags with `globalcodio`).
+UIDs, tags with `medicodio`).
 
 ---
 
@@ -118,7 +119,7 @@ All three read `GF_ADMIN_USER` / `GF_ADMIN_PASSWORD` from `.env`.
 
 - **UID**: lowercase kebab-case, unique. Never change after a dashboard ships.
 - **`id` field**: always `null` in committed JSON.
-- **Tags**: include `"globalcodio"`.
+- **Tags**: include `"medicodio"`.
 - **Datasource refs**: object form, never `${DS_*}` placeholders.
 - **Template vars**: use `env=~"$env"` so one variable filters every panel.
 - **Save first.** UI edits don't persist until you click the disk icon. No save = sync sees nothing.
@@ -137,4 +138,4 @@ All three read `GF_ADMIN_USER` / `GF_ADMIN_PASSWORD` from `.env`.
 | Duplicate UID error | Two files share `.uid` | `jq -r '.uid' grafana/dashboards/**/*.json \| sort \| uniq -d` |
 | UI edit lost after restart | Forgot to sync before container recreate | Re-edit, sync immediately |
 | `Dashboard/` or `Folder/` subdirs appeared | Ran `grafanactl pull` by mistake | `rm -rf grafana/dashboards/Dashboard grafana/dashboards/Folder` |
-| Script fails with `GF_ADMIN_USER / GF_ADMIN_PASSWORD missing` | `.env` not loaded or unset | Check `global-monitoring/.env` has both set |
+| Script fails with `GF_ADMIN_USER / GF_ADMIN_PASSWORD missing` | `.env` not loaded or unset | Check `monitoring/.env` has both set |

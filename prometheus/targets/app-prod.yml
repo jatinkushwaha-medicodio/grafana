@@ -1,0 +1,10 @@
+# Medicodio BE app — PROD. Azure Container Apps public ingress hostname
+# (HTTPS). ACA ingress must IP-allowlist the monitoring VM's egress IP; token
+# must match PROD_METRICS_TOKEN.
+
+- targets:
+    - "REPLACE_ME.azurecontainerapps.io"
+  labels:
+    env: prod
+    service: app
+    component: backend

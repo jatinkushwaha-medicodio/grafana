@@ -1,6 +1,6 @@
 # Local-only overlay — auto-loaded by `docker compose up` on a developer
-# machine. Adds the api-local scrape path (developer's host Node API running on
-# host.docker.internal:3001) without touching the base config the VM runs.
+# machine. Adds the app-local scrape path (developer's host Medicodio BE on
+# host.docker.internal:8000) without touching the base config the VM runs.
 #
 # VM ops bypass this file with:  `docker compose -f docker-compose.yml up -d`
 #
@@ -19,7 +19,7 @@ services:
       # Mounts the local-only scrape target into the same dir as the per-env
       # files. Compose merges this list with the base — additive, doesn't
       # touch dev/uat/prod mounts.
-      - ./prometheus/targets/local.yml:/etc/prometheus/targets/local.yml:ro
+      - ./prometheus/targets/app-local.yml:/etc/prometheus/targets/app-local.yml:ro
 
 secrets:
   local_metrics_token:

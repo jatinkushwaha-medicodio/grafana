@@ -1,0 +1,13 @@
+# Medicodio BE app — DEV. Runs as a container on the same VM as this
+# monitoring stack, on host port 8000. Prometheus reaches it via the
+# docker bridge → host gateway.
+#
+# Bearer token still enforced (DEV_METRICS_TOKEN in .env). Scheme is
+# http because traffic never leaves the VM.
+
+- targets:
+    - "host.docker.internal:8000"
+  labels:
+    env: dev
+    service: app
+    component: backend

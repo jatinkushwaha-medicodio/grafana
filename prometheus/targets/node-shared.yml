@@ -1,0 +1,10 @@
+# Host metrics for the shared Medicodio-UAT-DEV VM. Single VM hosts dev + uat
+# app containers + this monitoring stack, so one node_exporter target covers
+# all of it. Resolves via compose DNS to the sibling container.
+
+- targets:
+    - "node-exporter:9100"
+  labels:
+    env: shared
+    service: node
+    component: vm

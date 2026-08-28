@@ -1,0 +1,10 @@
+# Local dev — the developer's Medicodio BE running on host port 8000.
+# Only mounted via docker-compose.override.yml on developer machines.
+# host.docker.internal resolves via `extra_hosts: host-gateway`.
+
+- targets:
+    - "host.docker.internal:8000"
+  labels:
+    env: local
+    service: app
+    component: backend

@@ -4,9 +4,9 @@
 apiVersion: 1
 
 providers:
-  - name: GlobalCodio
+  - name: Medicodio
     orgId: 1
-    folder: GlobalCodio
+    folder: Medicodio
     type: file
     # Cascade file deletion → live dashboard deletion. Keeps git as the single
     # source of truth: `rm grafana/dashboards/<uid>.json` + push = gone everywhere.

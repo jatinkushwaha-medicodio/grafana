@@ -29,7 +29,7 @@ curl -sLf -u "${GF_ADMIN_USER}:${GF_ADMIN_PASSWORD}" \
   | jq '
       .dashboard
       | .id = null
-      | .tags = ((.tags // []) + ["globalcodio"] | unique)
+      | .tags = ((.tags // []) + ["medicodio"] | unique)
     ' \
   > "$OUT"
 

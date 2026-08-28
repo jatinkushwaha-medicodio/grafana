@@ -1,17 +1,17 @@
-# GlobalCodio monitoring stack — Grafana + Prometheus + Loki only.
+# Medicodio monitoring stack — Grafana + Prometheus + Loki only.
 #
 # Local dev:  `docker compose up -d`
 #   → also loads docker-compose.override.yml automatically, which wires
-#     the local-only api-local scrape (host.docker.internal:3001).
+#     the local-only app-local scrape (host.docker.internal:8000).
 #
 # VM deploy:  `docker compose -f docker-compose.yml up -d`
-#   → skips the override so no api-local scrape, no extra_hosts.
+#   → skips the override so no app-local scrape, no extra_hosts.
 #   → only dev/uat/prod targets attempted (driven by targets/*.yml).
 #
 # All UI ports bind to 127.0.0.1 — put a reverse proxy in front for public
 # access (Caddy / nginx). Never expose 3000/9090/3100 publicly.
 
-name: globalcodio-monitoring
+name: medicodio-monitoring
 
 services:
   prometheus:
@@ -19,6 +19,11 @@ services:
     container_name: monitoring-prometheus
     restart: unless-stopped
     user: "65534:65534"
+    # Lets the Prometheus container reach the VM host (where the dev + uat
+    # app containers publish :8000 / :8001). Native on Mac/Windows;
+    # `host-gateway` makes the same name work on Linux VMs too.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     command:
       - --config.file=/etc/prometheus/prometheus.yml
       - --storage.tsdb.path=/prometheus
@@ -33,13 +38,35 @@ services:
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       # Per-file mounts (not whole dir) so the local-only target file from the
-      # repo never ships to the VM. Override file adds `local.yml` on dev machines.
-      - ./prometheus/targets/dev.yml:/etc/prometheus/targets/dev.yml:ro
-      - ./prometheus/targets/uat.yml:/etc/prometheus/targets/uat.yml:ro
-      - ./prometheus/targets/prod.yml:/etc/prometheus/targets/prod.yml:ro
+      # repo never ships to the VM. Override file adds `app-local.yml` on dev
+      # machines.
+      - ./prometheus/targets/app-dev.yml:/etc/prometheus/targets/app-dev.yml:ro
+      - ./prometheus/targets/app-uat.yml:/etc/prometheus/targets/app-uat.yml:ro
+      - ./prometheus/targets/app-prod.yml:/etc/prometheus/targets/app-prod.yml:ro
+      - ./prometheus/targets/node-shared.yml:/etc/prometheus/targets/node-shared.yml:ro
       - prom-data:/prometheus
     ports:
       - "127.0.0.1:9090:9090"
+    networks:
+      - monitoring
+
+  # Host metrics for the VM this stack runs on (CPU / mem / disk / uptime).
+  # Reads /proc + /sys from the host via bind mounts. `pid: host` lets it see
+  # every process, not just the ones inside its own PID namespace.
+  node-exporter:
+    image: prom/node-exporter:v1.8.2
+    container_name: monitoring-node-exporter
+    restart: unless-stopped
+    pid: host
+    command:
+      - --path.rootfs=/host
+      - --path.procfs=/host/proc
+      - --path.sysfs=/host/sys
+      - --collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)
+    volumes:
+      - /:/host:ro,rslave
+    ports:
+      - "127.0.0.1:9100:9100"
     networks:
       - monitoring
 

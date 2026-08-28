@@ -31,7 +31,7 @@ jq --arg uid "$NEW_UID" '
   | (.. | objects | select((.datasource? != null) and (.datasource | type == "object") and (.datasource.uid? == "${DS_LOKI}")).datasource) |= {type:"loki", uid:"loki"}
   | .id = null
   | .uid = $uid
-  | .tags = ((.tags // []) + ["globalcodio"] | unique)
+  | .tags = ((.tags // []) + ["medicodio"] | unique)
 ' "$RAW" > "$OUT"
 
 echo "Wrote $OUT"

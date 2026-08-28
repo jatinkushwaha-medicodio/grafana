@@ -95,20 +95,22 @@ Replace UAT + PROD Teams webhooks once you create those channels (see step 6).
 Three files, one URL per env. Use the actual reachable hostnames:
 
 ```yaml
-# prometheus/targets/dev.yml
-- targets: ["api-dev.<domain>"]
-  labels: { env: dev, service: api, region: <region> }
+# prometheus/targets/app-dev.yml
+- targets: ["<dev-host>:8000"]
+  labels: { env: dev, service: app, component: backend }
 
-# prometheus/targets/uat.yml
-- targets: ["api-uat.<domain>"]
-  labels: { env: uat, service: api, region: <region> }
+# prometheus/targets/app-uat.yml
+- targets: ["<uat-host>:8000"]
+  labels: { env: uat, service: app, component: backend }
 
-# prometheus/targets/prod.yml
-- targets: ["api.<domain>"]
-  labels: { env: prod, service: api, region: eus }
+# prometheus/targets/app-prod.yml
+- targets: ["<prod-fqdn>.azurecontainerapps.io"]
+  labels: { env: prod, service: app, component: backend }
 ```
 
-The `local.yml` file is dev-only (override-mounted). On VM it's irrelevant.
+Also fill `node-dev.yml`, `node-uat.yml`, `pg-<env>.yml` once the exporters
+are deployed (see README). The `app-local.yml` file is dev-only
+(override-mounted). On VM it's irrelevant.
 
 ---
 
@@ -303,7 +305,7 @@ set -e
 SNAP_DIR=/var/backups/monitoring
 mkdir -p $SNAP_DIR
 for v in prom-data loki-data grafana-data; do
-  docker run --rm -v globalcodio-monitoring_$v:/src:ro -v $SNAP_DIR:/dst alpine \
+  docker run --rm -v medicodio-monitoring_$v:/src:ro -v $SNAP_DIR:/dst alpine \
     tar czf /dst/$v-$(date +%F).tgz -C /src .
 done
 # Optional: aws s3 / az storage upload to off-VM storage, rotate 7d
@@ -343,7 +345,7 @@ To restore: `docker compose down` → `tar xzf` into the volume mount path → `
 |---|---|---|
 | Bring-up command | `docker compose up -d` | `docker compose -f docker-compose.yml up -d` |
 | Override file | Auto-loaded | Explicitly bypassed |
-| `api-local` scrape job | UP, scrapes host's Node API | 0 targets, silent |
+| `app-local` scrape job | UP, scrapes host's Node BE | 0 targets, silent |
 | `local_metrics_token` secret | Mounted from `LOCAL_METRICS_TOKEN` env | Not present |
 | Public ingress | None (port 3030 on 127.0.0.1 only) | Caddy → 443 + TLS |
 | Grafana root URL | `http://localhost:3030` or devtunnel | `https://grafana.<domain>` |

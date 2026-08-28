@@ -1,0 +1,13 @@
+# Medicodio BE app — UAT. Runs as a container on the same VM as this
+# monitoring stack, on host port 8001. Prometheus reaches it via the
+# docker bridge → host gateway.
+#
+# Bearer token still enforced (UAT_METRICS_TOKEN in .env). Scheme is
+# http because traffic never leaves the VM.
+
+- targets:
+    - "host.docker.internal:8001"
+  labels:
+    env: uat
+    service: app
+    component: backend

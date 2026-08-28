@@ -42,7 +42,7 @@ for file in $(find grafana/dashboards -type f -name '*.json' | sort); do
     continue
   fi
 
-  jq '.dashboard | .id = null | .tags = ((.tags // []) + ["globalcodio"] | unique)' "$tmp" > "$file"
+  jq '.dashboard | .id = null | .tags = ((.tags // []) + ["medicodio"] | unique)' "$tmp" > "$file"
   rm -f "$tmp"
 
   if git diff --quiet -- "$file"; then

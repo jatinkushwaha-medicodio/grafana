@@ -1,7 +1,10 @@
-# Prometheus config — one job per environment so each env can use its own bearer
-# token via `authorization.credentials_file`. The actual list of target URLs per
-# env lives in targets/<env>.yml — edit those to onboard or move a target;
-# Prometheus auto-reloads (no restart).
+# Prometheus config — jobs split three ways:
+#   1. Medicodio BE app (`/metrics`)      — per-env job, bearer token per env.
+#   2. VM host metrics (`node_exporter`)  — DEV + UAT only (PROD is ACA, no VM).
+#   3. PostgreSQL (`postgres_exporter`)   — per-env DB, no auth (localhost-scoped).
+#
+# Per-env target lists live in targets/<env>.yml — edit those to onboard or
+# move a target; Prometheus auto-reloads (no restart).
 #
 # Tokens are read from env-files written to /run/secrets at container start
 # (mounted from the compose `.env`). credentials_file (not credentials) is used
@@ -12,48 +15,58 @@ global:
   scrape_timeout: 10s
   evaluation_interval: 30s
   external_labels:
-    cluster: globalcodio
+    cluster: medicodio
 
 scrape_configs:
-  - job_name: api-local
+  # ── 1. Medicodio BE app ─────────────────────────────────────────────────
+  - job_name: app-local
     metrics_path: /metrics
-    scheme: http                   # local dev usually runs on plain HTTP
+    scheme: http
     authorization:
       type: Bearer
       credentials_file: /run/secrets/local_metrics_token
     file_sd_configs:
-      # Glob matches local*.yml — present only on dev machines via
-      # docker-compose.override.yml. Absent on VM → 0 targets → silent
-      # (no `open: no such file` spam in Prometheus logs).
-      - files: [/etc/prometheus/targets/local*.yml]
+      - files: [/etc/prometheus/targets/app-local*.yml]
         refresh_interval: 1m
 
-  - job_name: api-dev
+  - job_name: app-dev
     metrics_path: /metrics
-    scheme: https
+    scheme: http
     authorization:
       type: Bearer
       credentials_file: /run/secrets/dev_metrics_token
     file_sd_configs:
-      - files: [/etc/prometheus/targets/dev.yml]
+      - files: [/etc/prometheus/targets/app-dev.yml]
         refresh_interval: 1m
 
-  - job_name: api-uat
+  - job_name: app-uat
     metrics_path: /metrics
-    scheme: https
+    scheme: http
     authorization:
       type: Bearer
       credentials_file: /run/secrets/uat_metrics_token
     file_sd_configs:
-      - files: [/etc/prometheus/targets/uat.yml]
+      - files: [/etc/prometheus/targets/app-uat.yml]
         refresh_interval: 1m
 
-  - job_name: api-prod
+  - job_name: app-prod
     metrics_path: /metrics
     scheme: https
     authorization:
       type: Bearer
       credentials_file: /run/secrets/prod_metrics_token
     file_sd_configs:
-      - files: [/etc/prometheus/targets/prod.yml]
+      - files: [/etc/prometheus/targets/app-prod.yml]
         refresh_interval: 1m
+
+  # ── 2. VM host metrics (node_exporter) ──────────────────────────────────
+  # Single shared VM: dev + uat app containers + this monitoring stack all
+  # sit on one host, so one node_exporter target covers everything.
+  # PROD runs on Azure Container Apps — no host to scrape.
+  - job_name: node-shared
+    metrics_path: /metrics
+    scheme: http
+    file_sd_configs:
+      - files: [/etc/prometheus/targets/node-shared.yml]
+        refresh_interval: 1m
+
