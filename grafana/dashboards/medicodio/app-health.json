@@ -4,7 +4,7 @@
   "tags": ["medicodio"],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 3,
+  "version": 4,
   "refresh": "30s",
   "time": { "from": "now-1h", "to": "now" },
   "templating": {
@@ -25,6 +25,7 @@
     {
       "id": 1,
       "title": "Request rate (req/s)",
+      "description": "How many HTTP requests the backend is serving per second, averaged over the last 5 minutes. Rising line = more traffic.",
       "type": "timeseries",
       "gridPos": { "x": 0, "y": 0, "w": 12, "h": 7 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
@@ -40,6 +41,7 @@
     {
       "id": 2,
       "title": "p95 latency (s)",
+      "description": "95th-percentile response time. 95 out of every 100 requests finished faster than this. Good tail-latency signal — a rising p95 hurts real users before averages notice.",
       "type": "timeseries",
       "gridPos": { "x": 12, "y": 0, "w": 12, "h": 7 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
@@ -55,6 +57,7 @@
     {
       "id": 3,
       "title": "HTTP status breakdown (req/s)",
+      "description": "Requests per second, coloured by HTTP status class. 2xx = success, 3xx = redirect, 4xx = client error (bad input / auth fail), 5xx = server error (real bug). Big 4xx = someone hammering; big 5xx = app broken.",
       "type": "timeseries",
       "gridPos": { "x": 0, "y": 7, "w": 12, "h": 7 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
@@ -70,6 +73,7 @@
     {
       "id": 4,
       "title": "Memory — RSS + heap used (MB)",
+      "description": "Backend process memory. RSS = total physical RAM the Node.js process is holding (code + heap + buffers + native modules). Heap = JavaScript objects only. Slow, steady RSS climb = memory leak.",
       "type": "timeseries",
       "gridPos": { "x": 12, "y": 7, "w": 12, "h": 7 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
@@ -90,6 +94,7 @@
     {
       "id": 10,
       "title": "Process CPU (cores)",
+      "description": "Fractional CPU cores the backend process is using. 1.0 = one full core; 2.0 = two full cores. This is the Node.js process only, not the whole VM.",
       "type": "timeseries",
       "gridPos": { "x": 0, "y": 14, "w": 12, "h": 6 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
@@ -105,6 +110,7 @@
     {
       "id": 5,
       "title": "Event-loop lag (s)",
+      "description": "How long a scheduled task waited before Node.js could run it, at p95. Node is single-threaded — sustained lag > 100 ms means the app is CPU-blocked (heavy sync code, big JSON parses) and requests are queuing up.",
       "type": "timeseries",
       "gridPos": { "x": 12, "y": 14, "w": 12, "h": 6 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
@@ -120,6 +126,7 @@
     {
       "id": 6,
       "title": "Job last success (min ago)",
+      "description": "For each background cron job, minutes since it last completed successfully. Large / growing = job is stuck or crashing. Empty on dev/uat because JOBS_ENABLED=false there.",
       "type": "table",
       "gridPos": { "x": 0, "y": 20, "w": 12, "h": 6 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
@@ -135,6 +142,7 @@
     {
       "id": 7,
       "title": "Job runs — last 1h",
+      "description": "How many times each background job ran in the last hour, split by outcome (success / failure). Failures column non-zero = investigate. Empty on dev/uat because jobs are off there.",
       "type": "table",
       "gridPos": { "x": 0, "y": 26, "w": 12, "h": 6 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
@@ -150,6 +158,7 @@
     {
       "id": 8,
       "title": "Errors + warnings",
+      "description": "Live tail of log lines where level=error or level=warn. First place to look when something breaks.",
       "type": "logs",
       "gridPos": { "x": 12, "y": 20, "w": 12, "h": 6 },
       "datasource": { "type": "loki", "uid": "loki" },
@@ -164,6 +173,7 @@
     {
       "id": 9,
       "title": "Logs",
+      "description": "Every log line the backend emitted, newest first. Filter with the env dropdown at the top. Use Logs Explorer dashboard for advanced filtering.",
       "type": "logs",
       "gridPos": { "x": 0, "y": 32, "w": 24, "h": 10 },
       "datasource": { "type": "loki", "uid": "loki" },

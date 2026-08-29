@@ -4,7 +4,7 @@
   "tags": ["medicodio"],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 1,
+  "version": 2,
   "refresh": "30s",
   "time": { "from": "now-1h", "to": "now" },
   "templating": {
@@ -25,6 +25,7 @@
     {
       "id": 1,
       "title": "CPU busy %",
+      "description": "How much of the VM's CPU cores were doing work (not idle) over the last 5 minutes. 100% means every core is fully used. This is a whole-VM view — all processes on the box combined, not just our backend.",
       "type": "timeseries",
       "gridPos": { "x": 0, "y": 0, "w": 12, "h": 7 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
@@ -40,6 +41,7 @@
     {
       "id": 2,
       "title": "Memory used %",
+      "description": "Fraction of the VM's RAM that is currently occupied and can't be handed out immediately. Sustained > 90% risks the OOM killer taking down processes.",
       "type": "timeseries",
       "gridPos": { "x": 12, "y": 0, "w": 12, "h": 7 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
@@ -55,6 +57,7 @@
     {
       "id": 3,
       "title": "Disk used % (per mount)",
+      "description": "Fraction of each filesystem in use. `/` is the main VM disk. Approaching 100% breaks writes — including our Loki + Prometheus data. Watch this before alerts fire.",
       "type": "timeseries",
       "gridPos": { "x": 0, "y": 7, "w": 12, "h": 7 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
@@ -70,6 +73,7 @@
     {
       "id": 4,
       "title": "Load average (1m / 5m / 15m)",
+      "description": "Number of processes wanting CPU, averaged over 1 / 5 / 15 minutes. Loosely: sustained load > core count = the VM is behind. This VM has 2 cores, so load > 2.0 for 5+ minutes = pressure.",
       "type": "timeseries",
       "gridPos": { "x": 12, "y": 7, "w": 12, "h": 7 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
@@ -82,6 +86,7 @@
     {
       "id": 5,
       "title": "Network I/O",
+      "description": "Bytes per second sent (tx) and received (rx) on real network interfaces (excluding loopback and docker bridges). Whole-VM combined traffic.",
       "type": "timeseries",
       "gridPos": { "x": 0, "y": 14, "w": 12, "h": 7 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
@@ -102,6 +107,7 @@
     {
       "id": 6,
       "title": "Uptime",
+      "description": "How long since the VM last booted. Sudden reset here = VM restart (planned maintenance or crash).",
       "type": "stat",
       "gridPos": { "x": 12, "y": 14, "w": 12, "h": 7 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
