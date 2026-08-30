@@ -4,7 +4,7 @@
   "tags": ["medicodio"],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 4,
+  "version": 6,
   "refresh": "30s",
   "time": { "from": "now-1h", "to": "now" },
   "templating": {
@@ -171,11 +171,52 @@
       "options": { "showTime": true, "wrapLogMessage": true }
     },
     {
+      "id": 11,
+      "title": "Top 5 routes by 5xx rate",
+      "description": "Which routes are throwing server errors (HTTP 5xx) right now. Empty = zero 5xx across the app. First place to look when the error rate panel goes red — turns 'the app is broken' into 'route X is broken.'",
+      "type": "table",
+      "gridPos": { "x": 12, "y": 26, "w": 12, "h": 6 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "topk(5, sum by (route) (rate(app_http_request_duration_seconds_count{env=~\"$env\",status_class=\"5xx\"}[5m])))",
+          "instant": true,
+          "format": "table"
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "title": "Availability (per env)",
+      "description": "Whether Prometheus successfully scraped the backend on its last try. 1 = up, 0 = down. Populates as each env is wired in — dev today, uat + prod later. First panel to check when nothing else has data.",
+      "type": "stat",
+      "gridPos": { "x": 0, "y": 32, "w": 24, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "up{job=~\"app-.*\"}",
+          "legendFormat": "{{job}}",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "0": { "text": "DOWN", "color": "red" }, "1": { "text": "UP", "color": "green" } } }
+          ],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": null }, { "color": "green", "value": 1 }] }
+        }
+      },
+      "options": { "colorMode": "background", "graphMode": "none", "textMode": "value_and_name" }
+    },
+    {
       "id": 9,
       "title": "Logs",
       "description": "Every log line the backend emitted, newest first. Filter with the env dropdown at the top. Use Logs Explorer dashboard for advanced filtering.",
       "type": "logs",
-      "gridPos": { "x": 0, "y": 32, "w": 24, "h": 10 },
+      "gridPos": { "x": 0, "y": 36, "w": 24, "h": 10 },
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
