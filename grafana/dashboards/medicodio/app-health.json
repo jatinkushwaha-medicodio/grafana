@@ -4,7 +4,7 @@
   "tags": ["medicodio"],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 6,
+  "version": 7,
   "refresh": "30s",
   "time": { "from": "now-1h", "to": "now" },
   "templating": {
@@ -165,7 +165,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "{env=~\"$env\",service=\"medicodio-app\"} | json | level=~\"error|warn\""
+          "expr": "{env=~\"$env\",service=\"medicodio-app\"} | json | __error__=\"\" | level=~\"error|warn\""
         }
       ],
       "options": { "showTime": true, "wrapLogMessage": true }

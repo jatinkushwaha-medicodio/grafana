@@ -117,6 +117,15 @@ services:
       GF_AUTH_GENERIC_OAUTH_TOKEN_URL: ${GF_OAUTH_TOKEN_URL:-}
       GF_AUTH_GENERIC_OAUTH_API_URL: ${GF_OAUTH_API_URL:-}
       GF_AUTH_GENERIC_OAUTH_ALLOW_ASSIGN_GRAFANA_ADMIN: "false"
+      # Restrict sign-in to medicodio.ai company email addresses. Anyone with a
+      # tenant account can auth via Microsoft, but Grafana rejects non-medicodio
+      # domains at the last step.
+      GF_AUTH_GENERIC_OAUTH_ALLOWED_DOMAINS: medicodio.ai
+      # Everyone new lands as Viewer by default. Promote specific accounts to
+      # Editor/Admin via Grafana UI → Users after their first login.
+      GF_AUTH_GENERIC_OAUTH_ROLE_ATTRIBUTE_STRICT: "false"
+      GF_USERS_AUTO_ASSIGN_ORG: "true"
+      GF_AUTH_GENERIC_OAUTH_USE_PKCE: "true"
       # Teams webhooks for alerting — one channel per env.
       TEAMS_WEBHOOK_URL_DEV: ${TEAMS_WEBHOOK_URL_DEV:-}
       TEAMS_WEBHOOK_URL_UAT: ${TEAMS_WEBHOOK_URL_UAT:-}
