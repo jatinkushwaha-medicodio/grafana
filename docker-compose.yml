@@ -126,10 +126,9 @@ services:
       GF_AUTH_GENERIC_OAUTH_ROLE_ATTRIBUTE_STRICT: "false"
       GF_USERS_AUTO_ASSIGN_ORG: "true"
       GF_AUTH_GENERIC_OAUTH_USE_PKCE: "true"
-      # Teams webhooks for alerting — one channel per env.
-      TEAMS_WEBHOOK_URL_DEV: ${TEAMS_WEBHOOK_URL_DEV:-}
-      TEAMS_WEBHOOK_URL_UAT: ${TEAMS_WEBHOOK_URL_UAT:-}
-      TEAMS_WEBHOOK_URL_PROD: ${TEAMS_WEBHOOK_URL_PROD:-}
+      # Single Teams webhook that receives every alert. Message body carries
+      # the env label so DEV / UAT / PROD alerts land in the same channel.
+      TEAMS_WEBHOOK_URL: ${TEAMS_WEBHOOK_URL:-}
     volumes:
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
       - ./grafana/dashboards:/var/lib/grafana/dashboards:ro

@@ -1,0 +1,20 @@
+apiVersion: 1
+
+# One Teams channel receives every alert. Message body includes the env, so a
+# single channel gets DEV / UAT / PROD alerts side by side. Webhook URL comes
+# from $TEAMS_WEBHOOK_URL in .env.grafana on the VM. If it's blank at boot,
+# Grafana rejects provisioning — keep the URL populated or rename this file
+# back to .disabled to skip.
+
+contactPoints:
+  - orgId: 1
+    name: teams-all
+    receivers:
+      - uid: teams_all_001
+        type: webhook
+        settings:
+          url: $TEAMS_WEBHOOK_URL
+          httpMethod: POST
+          title: '[{{ .CommonLabels.env }}] {{ template "default.title" . }}'
+          message: '{{ template "default.message" . }}'
+        disableResolveMessage: false

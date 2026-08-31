@@ -1,10 +1,100 @@
 apiVersion: 1
 
-# Alert rules — rebuilt in Phase 1d against Medicodio metric names.
-# Placeholder targets (once /metrics + job instrumentation ships):
-#   - Job staleness (app_job_last_success_timestamp_seconds too old)
-#   - 5xx spike (app_http_request_duration_seconds_count status_class=5xx)
-#   - p95 latency high (histogram_quantile over app_http_request_duration_seconds_bucket)
-#   - Monitoring VM disk > 80% (node_filesystem_avail_bytes)
+# Alert rules fire on Prometheus metrics. Each rule below runs on every
+# scrape and posts to Teams when the condition holds for `for:` long.
 
-groups: []
+groups:
+  - orgId: 1
+    name: app-errors
+    folder: Medicodio Alerts
+    interval: 1m
+    rules:
+      - uid: app_500_spike
+        title: 'API 500 (server error)'
+        condition: B
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              refId: A
+              editorMode: code
+              expr: 'sum by (env) (rate(app_http_request_duration_seconds_count{status_class="5xx"}[5m]))'
+              instant: true
+              range: false
+              intervalMs: 1000
+              maxDataPoints: 43200
+          - refId: B
+            relativeTimeRange:
+              from: 0
+              to: 0
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: gt, params: [0] }
+                  operator: { type: and }
+                  query: { params: [A] }
+                  reducer: { type: last, params: [] }
+                  type: query
+        for: 1m
+        noDataState: OK
+        execErrState: Error
+        labels:
+          severity: critical
+          service: app
+        annotations:
+          summary: '[{{ $labels.env }}] Server errors — {{ $values.A.Value | printf "%.3f" }} req/s of HTTP 5xx'
+          description: 'The backend on env={{ $labels.env }} is throwing HTTP 500-class responses. Open App Health → "Top 5 routes by 5xx rate" to find the offender.'
+
+  - orgId: 1
+    name: vm-health
+    folder: Medicodio Alerts
+    interval: 5m
+    rules:
+      - uid: vm_disk_high
+        title: 'VM disk usage high'
+        condition: B
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              refId: A
+              editorMode: code
+              expr: '100 - (node_filesystem_avail_bytes{mountpoint="/",fstype!~"tmpfs|overlay|squashfs"} / node_filesystem_size_bytes{mountpoint="/",fstype!~"tmpfs|overlay|squashfs"} * 100)'
+              instant: true
+              range: false
+              intervalMs: 1000
+              maxDataPoints: 43200
+          - refId: B
+            relativeTimeRange:
+              from: 0
+              to: 0
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: gt, params: [85] }
+                  operator: { type: and }
+                  query: { params: [A] }
+                  reducer: { type: last, params: [] }
+                  type: query
+        for: 10m
+        noDataState: OK
+        execErrState: Error
+        labels:
+          severity: warning
+          service: vm
+          env: infra
+        annotations:
+          summary: 'VM disk usage {{ $values.A.Value | printf "%.1f" }}% (threshold 85%)'
+          description: 'Root filesystem on the monitoring/app VM is filling up. If it hits 100%, Docker + Loki + Prometheus stop writing. Free space or bump Loki/Prom retention.'
