@@ -15,6 +15,9 @@ contactPoints:
         settings:
           url: $TEAMS_WEBHOOK_URL
           httpMethod: POST
-          title: '[{{ .CommonLabels.env }}] {{ template "default.title" . }}'
-          message: '{{ template "default.message" . }}'
+          title: '[{{ .CommonLabels.env }}] {{ .Status | toUpper }} — {{ .CommonLabels.alertname }}'
+          message: |-
+            {{ range .Alerts -}}
+            {{ .Annotations.summary }}
+            {{ end }}
         disableResolveMessage: false

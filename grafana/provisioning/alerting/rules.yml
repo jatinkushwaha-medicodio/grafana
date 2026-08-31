@@ -83,12 +83,12 @@ groups:
               type: threshold
               expression: A
               conditions:
-                - evaluator: { type: gt, params: [85] }
+                - evaluator: { type: gt, params: [70] }
                   operator: { type: and }
                   query: { params: [A] }
                   reducer: { type: last, params: [] }
                   type: query
-        for: 10m
+        for: 1m
         noDataState: OK
         execErrState: Error
         labels:
@@ -96,5 +96,5 @@ groups:
           service: vm
           env: infra
         annotations:
-          summary: 'VM disk usage {{ $values.A.Value | printf "%.1f" }}% (threshold 85%)'
+          summary: 'VM disk usage {{ $values.A.Value | printf "%.1f" }}% (threshold 70% — TEMP for testing, restore to 85%)'
           description: 'Root filesystem on the monitoring/app VM is filling up. If it hits 100%, Docker + Loki + Prometheus stop writing. Free space or bump Loki/Prom retention.'

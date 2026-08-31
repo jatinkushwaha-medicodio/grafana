@@ -4,7 +4,7 @@
   "tags": ["medicodio"],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 7,
+  "version": 8,
   "refresh": "30s",
   "time": { "from": "now-1h", "to": "now" },
   "templating": {
@@ -157,15 +157,15 @@
     },
     {
       "id": 8,
-      "title": "Errors + warnings",
-      "description": "Live tail of log lines where level=error or level=warn. First place to look when something breaks.",
+      "title": "Errors",
+      "description": "Live tail of log lines where level=error. First place to look when something breaks.",
       "type": "logs",
       "gridPos": { "x": 12, "y": 20, "w": 12, "h": 6 },
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
           "refId": "A",
-          "expr": "{env=~\"$env\",service=\"medicodio-app\"} | json | __error__=\"\" | level=~\"error|warn\""
+          "expr": "{env=~\"$env\",service=\"medicodio-app\"} | json | __error__=\"\" | level=\"error\""
         }
       ],
       "options": { "showTime": true, "wrapLogMessage": true }
