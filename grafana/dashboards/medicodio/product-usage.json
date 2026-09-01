@@ -1,0 +1,190 @@
+{
+  "uid": "medicodio-product-usage",
+  "title": "Product Usage",
+  "tags": ["medicodio", "analytics"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 6,
+  "refresh": "1m",
+  "time": { "from": "now-30d", "to": "now" },
+  "templating": {
+    "list": [
+      {
+        "name": "range",
+        "label": "Window",
+        "type": "custom",
+        "query": "7 days,30 days,90 days",
+        "current": { "text": "30 days", "value": "30 days" },
+        "hide": 0,
+        "includeAll": false,
+        "multi": false
+      },
+      {
+        "name": "client",
+        "label": "Client",
+        "type": "query",
+        "datasource": { "type": "postgres", "uid": "postgres_app" },
+        "query": "SELECT 'All' AS __text, 'All' AS __value UNION ALL SELECT name AS __text, id::text AS __value FROM t_org_clients ORDER BY __text",
+        "refresh": 2,
+        "includeAll": false,
+        "multi": false,
+        "current": { "text": "All", "value": "All" }
+      },
+      {
+        "name": "area",
+        "label": "Area",
+        "type": "query",
+        "datasource": { "type": "postgres", "uid": "postgres_app" },
+        "query": "SELECT 'All' AS __text, 'All' AS __value UNION ALL SELECT DISTINCT area AS __text, area AS __value FROM t_sys_analytics_taxonomy ORDER BY __text",
+        "refresh": 2,
+        "includeAll": false,
+        "multi": false,
+        "current": { "text": "All", "value": "All" }
+      },
+      {
+        "name": "feature",
+        "label": "Feature",
+        "type": "query",
+        "datasource": { "type": "postgres", "uid": "postgres_app" },
+        "query": "SELECT 'All' AS __text, 'All' AS __value UNION ALL SELECT DISTINCT feature AS __text, feature AS __value FROM t_sys_analytics_taxonomy WHERE ('${area}' = 'All' OR area = '${area}') ORDER BY __text",
+        "refresh": 2,
+        "includeAll": false,
+        "multi": false,
+        "current": { "text": "All", "value": "All" }
+      },
+      {
+        "name": "sub_feature",
+        "label": "Sub-feature",
+        "type": "query",
+        "datasource": { "type": "postgres", "uid": "postgres_app" },
+        "query": "SELECT 'All' AS __text, 'All' AS __value UNION ALL SELECT DISTINCT sub_feature AS __text, sub_feature AS __value FROM t_sys_analytics_taxonomy WHERE sub_feature IS NOT NULL AND ('${area}' = 'All' OR area = '${area}') AND ('${feature}' = 'All' OR feature = '${feature}') ORDER BY __text",
+        "refresh": 2,
+        "includeAll": false,
+        "multi": false,
+        "current": { "text": "All", "value": "All" }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Most visited areas",
+      "description": "Top-level areas ranked by page-visit count. One visit = one route-level entry into the area; internal tab switches within a page do NOT inflate this count (see the Nested tabs panel for those).",
+      "type": "barchart",
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 9 },
+      "datasource": { "type": "postgres", "uid": "postgres_app" },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "rawSql": "SELECT area, COUNT(*)::int AS visits FROM t_analytics_events WHERE event_time > now() - '${range}'::interval AND ('${client}' = 'All' OR client_id::text = '${client}') AND ('${area}' = 'All' OR area = '${area}') AND ('${feature}' = 'All' OR feature = '${feature}') AND sub_feature IS NULL GROUP BY area ORDER BY visits DESC"
+        }
+      ],
+      "options": {
+        "orientation": "horizontal",
+        "showValue": "always",
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 100,
+        "barWidth": 0.9,
+        "groupWidth": 0.7,
+        "legend": { "showLegend": false }
+      },
+      "fieldConfig": { "defaults": { "unit": "short", "min": 0 } }
+    },
+    {
+      "id": 2,
+      "title": "Most visited features",
+      "description": "Pages / features people actually open, counted as page visits only. Tab switches inside a page do NOT inflate this count.",
+      "type": "table",
+      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 9 },
+      "datasource": { "type": "postgres", "uid": "postgres_app" },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "rawSql": "SELECT area || ' → ' || feature AS page, COUNT(*)::int AS visits FROM t_analytics_events WHERE event_time > now() - '${range}'::interval AND ('${client}' = 'All' OR client_id::text = '${client}') AND ('${area}' = 'All' OR area = '${area}') AND ('${feature}' = 'All' OR feature = '${feature}') AND sub_feature IS NULL GROUP BY area, feature ORDER BY visits DESC LIMIT 25"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Most visited nested tabs (sub-features)",
+      "description": "Deepest level — which tabs inside a feature people actually open. Rows only appear when a sub_feature is recorded.",
+      "type": "table",
+      "gridPos": { "x": 0, "y": 9, "w": 12, "h": 9 },
+      "datasource": { "type": "postgres", "uid": "postgres_app" },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "rawSql": "SELECT area || ' → ' || feature || ' → ' || sub_feature AS tab, COUNT(*)::int AS visits FROM t_analytics_events WHERE event_time > now() - '${range}'::interval AND ('${client}' = 'All' OR client_id::text = '${client}') AND ('${area}' = 'All' OR area = '${area}') AND ('${feature}' = 'All' OR feature = '${feature}') AND ('${sub_feature}' = 'All' OR sub_feature = '${sub_feature}') AND sub_feature IS NOT NULL GROUP BY area, feature, sub_feature ORDER BY visits DESC LIMIT 25"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Usage by role",
+      "description": "Which roles produce the traffic. Only roles listed in the client's analytics.tracked_roles are recorded — everyone else is invisible to this dashboard by design.",
+      "type": "piechart",
+      "gridPos": { "x": 12, "y": 9, "w": 12, "h": 9 },
+      "datasource": { "type": "postgres", "uid": "postgres_app" },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "rawSql": "SELECT role, COUNT(*)::int AS visits FROM t_analytics_events WHERE event_time > now() - '${range}'::interval AND ('${client}' = 'All' OR client_id::text = '${client}') AND ('${area}' = 'All' OR area = '${area}') AND ('${feature}' = 'All' OR feature = '${feature}') AND ('${sub_feature}' = 'All' OR sub_feature = '${sub_feature}') GROUP BY role ORDER BY visits DESC"
+        }
+      ],
+      "options": {
+        "pieType": "pie",
+        "legend": { "displayMode": "table", "placement": "right", "values": ["value", "percent"] },
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "tooltip": { "mode": "single" }
+      },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" } }
+      },
+      "transformations": [
+        {
+          "id": "rowsToFields",
+          "options": {
+            "mappings": [
+              { "fieldName": "role", "handlerKey": "field.name" },
+              { "fieldName": "visits", "handlerKey": "field.value" }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Usage by client",
+      "description": "One row per client. `active_users` counts distinct user_id in the window — a truer signal of adoption than raw event count.",
+      "type": "table",
+      "gridPos": { "x": 0, "y": 18, "w": 12, "h": 9 },
+      "datasource": { "type": "postgres", "uid": "postgres_app" },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "rawSql": "SELECT c.name AS client, COUNT(*)::int AS events, COUNT(DISTINCT ae.user_id)::int AS active_users FROM t_analytics_events ae JOIN t_org_clients c ON c.id = ae.client_id WHERE ae.event_time > now() - '${range}'::interval AND ('${area}' = 'All' OR ae.area = '${area}') AND ('${feature}' = 'All' OR ae.feature = '${feature}') AND ('${sub_feature}' = 'All' OR ae.sub_feature = '${sub_feature}') GROUP BY c.name ORDER BY events DESC"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Zero / low-usage features (last window)",
+      "description": "Features in the taxonomy that recorded ZERO events in the window. Sourced from t_sys_analytics_taxonomy (LEFT JOIN vs events) so every declared feature is accountable — not just the ones that happened to fire.",
+      "type": "table",
+      "gridPos": { "x": 12, "y": 18, "w": 12, "h": 9 },
+      "datasource": { "type": "postgres", "uid": "postgres_app" },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "rawSql": "SELECT t.area, t.feature FROM (SELECT DISTINCT area, feature FROM t_sys_analytics_taxonomy WHERE sub_feature IS NULL) t LEFT JOIN (SELECT DISTINCT area, feature FROM t_analytics_events WHERE event_time > now() - '${range}'::interval AND ('${client}' = 'All' OR client_id::text = '${client}')) e ON e.area = t.area AND e.feature = t.feature WHERE e.feature IS NULL ORDER BY t.area, t.feature"
+        }
+      ]
+    }
+  ]
+}

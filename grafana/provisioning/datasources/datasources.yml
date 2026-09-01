@@ -29,3 +29,28 @@ datasources:
           matcherRegex: '"correlationId":"([^"]+)"'
           datasourceUid: loki
           url: '${__value.raw}'
+
+  # App-DB read-only datasource for product-usage analytics dashboards.
+  # Populated from .env.grafana on the monitoring VM:
+  #   APP_DB_HOST, APP_DB_PORT, APP_DB_NAME, APP_DB_ANALYTICS_USER,
+  #   APP_DB_ANALYTICS_PASSWORD (grafana_ro role with BYPASSRLS).
+  # If any of these are blank the datasource loads but queries fail — panels
+  # will show "No data" until the values are set.
+  - name: Postgres (App)
+    uid: postgres_app
+    type: postgres
+    access: proxy
+    url: ${APP_DB_HOST}:${APP_DB_PORT}
+    database: ${APP_DB_NAME}
+    user: ${APP_DB_ANALYTICS_USER}
+    editable: false
+    jsonData:
+      # Local Postgres usually has no TLS → set APP_DB_SSLMODE=disable in
+      # monitoring/.env. Cloud / dev / prod DBs → set APP_DB_SSLMODE=require.
+      # Compose supplies a `require` default when the var isn't set (see
+      # docker-compose.yml grafana env block).
+      sslmode: ${APP_DB_SSLMODE}
+      postgresVersion: 1500
+      timescaledb: false
+    secureJsonData:
+      password: ${APP_DB_ANALYTICS_PASSWORD}

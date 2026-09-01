@@ -129,6 +129,17 @@ services:
       # Single Teams webhook that receives every alert. Message body carries
       # the env label so DEV / UAT / PROD alerts land in the same channel.
       TEAMS_WEBHOOK_URL: ${TEAMS_WEBHOOK_URL:-}
+      # App-DB (Postgres) read-only datasource for product-usage analytics.
+      # Blank values leave the datasource registered but non-functional until
+      # the grafana_ro role + creds are provisioned on the app DB.
+      APP_DB_HOST: ${APP_DB_HOST:-}
+      APP_DB_PORT: ${APP_DB_PORT:-5432}
+      APP_DB_NAME: ${APP_DB_NAME:-}
+      APP_DB_ANALYTICS_USER: ${APP_DB_ANALYTICS_USER:-}
+      APP_DB_ANALYTICS_PASSWORD: ${APP_DB_ANALYTICS_PASSWORD:-}
+      # Postgres SSL mode. Cloud/prod DBs → require. Local Docker Desktop
+      # Postgres → disable. Default is require so prod stays secure by default.
+      APP_DB_SSLMODE: ${APP_DB_SSLMODE:-require}
     volumes:
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
       - ./grafana/dashboards:/var/lib/grafana/dashboards:ro

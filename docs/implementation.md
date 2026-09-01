@@ -476,3 +476,72 @@ curl -s -H "Authorization: Bearer $DEV_METRICS_TOKEN" \
   - Reverse proxy for external Grafana access (next task).
   - NSG opening whatever port the reverse proxy exposes.
   - Optional: DNS name for `grafana.medicodio.ai` (or similar).
+
+---
+
+## 10. Phase 2 — Product-Usage Analytics
+
+Snapshot of what shipped alongside the observability stack. Full contract lives in
+`medicodio-nextgen-app-nodejs/docs/analytics/README.md`; this section covers only
+the monitoring-repo pieces.
+
+### What the FE / BE side does
+
+- **FE (`medicodio-nextgen-app-react/src/shared/analytics/`)** — mounts a
+  `<PageViewTracker />` in `App.tsx`. Emits one event per route change plus
+  ~15 hand-picked calls in state-driven tabs (Chart Queue buckets, Chart
+  Details right-pane, Chart PDF ↔ Profile, Matrix ↔ Stacked, Payer Rules,
+  prev/next encounter, History tabs, Mandatory Fields tabs, Access tabs).
+  Batches every 30 s (also on visibilitychange/beforeunload) to
+  `POST /api/v1/app/analytics/events`.
+- **BE (`medicodio-nextgen-app-nodejs/src/routes/analytics.routes.ts` +
+  `services/analytics/*`)** — validates the batch with Zod, drops events for
+  users whose role slug is not in `analytics.tracked_roles`, sanitises
+  `page_path` (UUIDs) + caps `props` at 4 KB, bulk-INSERTs under RLS.
+  Kill switch: `ANALYTICS_ENABLED=false`.
+
+### What the monitoring repo owns
+
+- `grafana/provisioning/datasources/datasources.yml` — a third datasource
+  `Postgres (App)` (uid `postgres_app`) reads from the app DB via a read-only
+  `grafana_ro` role. Env vars come from `.env.grafana`:
+  `APP_DB_HOST`, `APP_DB_PORT`, `APP_DB_NAME`, `APP_DB_ANALYTICS_USER`,
+  `APP_DB_ANALYTICS_PASSWORD`.
+- `docker-compose.yml` — passes the five `APP_DB_*` env vars through to the
+  Grafana container. Blank values leave the datasource registered but panels
+  show "No data".
+- `grafana/dashboards/medicodio/product-usage.json` — the new dashboard.
+  Six panels: most-visited areas, features, nested tabs, usage by role,
+  usage by client, zero/low-usage features.
+
+### Ops setup (one-time)
+
+On the app Postgres:
+
+```sql
+CREATE ROLE grafana_ro WITH LOGIN PASSWORD '<generated>';
+GRANT CONNECT ON DATABASE <app_db> TO grafana_ro;
+GRANT USAGE ON SCHEMA public TO grafana_ro;
+GRANT SELECT ON t_analytics_events, t_iam_users, t_iam_roles,
+                t_org_clients, t_sys_features, t_sys_client_config
+             TO grafana_ro;
+ALTER ROLE grafana_ro BYPASSRLS;
+```
+
+Populate `.env.grafana` with the five `APP_DB_*` values on the monitoring VM.
+Then rerun the monitoring pipeline — Grafana loads the new datasource + the
+Product Usage dashboard on the next `docker compose up -d`.
+
+### Retention / partitions
+
+Not partitioned. Current traffic (~5 clients × ~20 users × ~50 events/user/day)
+produces ~30 k rows / month at ~5 MB — comfortably below any partition need.
+Triggers to revisit: row count > 10 M, insert p95 > 50 ms, or age-based DELETE
+becomes a hot path.
+
+### Rollback
+
+- `ANALYTICS_ENABLED=false` on the BE stops writes system-wide within one
+  request cycle. FE keeps enqueueing harmlessly.
+- Per-client override `analytics.tracked_roles = []` in `t_sys_client_config`
+  stops writes for that client only, within ~1 s (WS cache invalidate).
