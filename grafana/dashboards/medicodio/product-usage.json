@@ -4,7 +4,7 @@
   "tags": ["medicodio", "analytics"],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 8,
+  "version": 9,
   "refresh": "1m",
   "time": { "from": "now-30d", "to": "now" },
   "templating": {
@@ -208,6 +208,71 @@
           "rawSql": "SELECT t.area, t.feature FROM (SELECT DISTINCT area, feature FROM t_sys_analytics_taxonomy WHERE sub_feature IS NULL) t LEFT JOIN (SELECT DISTINCT area, feature FROM t_analytics_events WHERE event_time > now() - '${range}'::interval AND ('${client}' = 'All' OR client_id::text = '${client}') AND role ~ '^${role:regex}$') e ON e.area = t.area AND e.feature = t.feature WHERE e.feature IS NULL ORDER BY t.area, t.feature"
         }
       ]
+    },
+    {
+      "id": 7,
+      "title": "Area transitions (top flows)",
+      "description": "For each session, the sequence of areas a user moved through. Reveals real navigation paths — where users actually go after landing on an area, not where we intended. Uses LEAD() over session_id ordered by event_time; same-area consecutive events are collapsed.",
+      "type": "table",
+      "gridPos": { "x": 0, "y": 27, "w": 24, "h": 9 },
+      "datasource": { "type": "postgres", "uid": "${env_ds}" },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "rawSql": "WITH ordered AS (SELECT session_id, area, event_time, LEAD(area) OVER (PARTITION BY session_id ORDER BY event_time) AS next_area FROM t_analytics_events WHERE event_time > now() - '${range}'::interval AND ('${client}' = 'All' OR client_id::text = '${client}') AND role ~ '^${role:regex}$' AND ('${area}' = 'All' OR area = '${area}') AND ('${feature}' = 'All' OR feature = '${feature}')) SELECT area AS from_area, next_area AS to_area, COUNT(*)::int AS transitions FROM ordered WHERE next_area IS NOT NULL AND area <> next_area GROUP BY 1, 2 ORDER BY transitions DESC LIMIT 25"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "left",
+            "cellOptions": { "type": "auto" }
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "transitions" },
+            "properties": [
+              { "id": "custom.cellOptions", "value": { "type": "gauge", "mode": "gradient" } },
+              { "id": "custom.align", "value": "right" },
+              { "id": "min", "value": 0 }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 8,
+      "title": "Peak hours — hour × weekday",
+      "description": "When users actually work. Rows = weekday (Mon → Sun), columns = hour-of-day in the tenant's browser timezone. Deeper colour = more events. Use to time cron jobs, deploys, maintenance windows.",
+      "type": "heatmap",
+      "gridPos": { "x": 0, "y": 36, "w": 24, "h": 11 },
+      "datasource": { "type": "postgres", "uid": "${env_ds}" },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "rawSql": "SELECT (date_trunc('day', event_time) + (EXTRACT(HOUR FROM event_time) || ' hours')::interval) AS time, to_char(event_time, 'ID_Dy') AS dow, COUNT(*)::int AS events FROM t_analytics_events WHERE event_time > now() - '${range}'::interval AND ('${client}' = 'All' OR client_id::text = '${client}') AND role ~ '^${role:regex}$' AND ('${area}' = 'All' OR area = '${area}') AND ('${feature}' = 'All' OR feature = '${feature}') GROUP BY 1, 2 ORDER BY 1, 2"
+        }
+      ],
+      "options": {
+        "calculate": false,
+        "cellGap": 2,
+        "cellRadius": 2,
+        "color": { "mode": "scheme", "scheme": "Turbo", "steps": 64, "reverse": false, "exponent": 0.5 },
+        "yAxis": { "axisPlacement": "left", "reverse": false },
+        "rowsFrame": { "layout": "auto", "value": "events" },
+        "tooltip": { "mode": "single", "yHistogram": false },
+        "legend": { "show": true },
+        "exemplars": { "color": "rgba(255,0,255,0.7)" },
+        "filterValues": { "le": 1e-9 }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "scaleDistribution": { "type": "linear" }, "hideFrom": { "tooltip": false, "viz": false, "legend": false } }
+        }
+      }
     }
   ]
 }
