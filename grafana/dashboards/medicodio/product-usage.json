@@ -4,7 +4,7 @@
   "tags": ["medicodio", "analytics"],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 11,
+  "version": 12,
   "refresh": "1m",
   "time": { "from": "now-7d", "to": "now" },
   "templating": {
@@ -187,7 +187,7 @@
     {
       "id": 6,
       "title": "Zero / low-usage features (last window)",
-      "description": "Features in the taxonomy that recorded ZERO events in the window. Sourced from t_sys_analytics_taxonomy (LEFT JOIN vs events) so every declared feature is accountable — not just the ones that happened to fire.",
+      "description": "Every declared taxonomy triplet — area, feature, sub_feature — that recorded ZERO events in the window. LEFT JOIN over t_sys_analytics_taxonomy so page-view rows (sub_feature IS NULL) AND deeper tab rows (sub_feature set) are both accountable. Filter predicates live in the ON clause so the join stays a true LEFT JOIN under narrower time / client / role selections.",
       "type": "table",
       "gridPos": { "x": 12, "y": 18, "w": 12, "h": 9 },
       "datasource": { "type": "postgres", "uid": "${env_ds}" },
@@ -195,7 +195,7 @@
         {
           "refId": "A",
           "format": "table",
-          "rawSql": "SELECT t.area, t.feature FROM (SELECT DISTINCT area, feature FROM t_sys_analytics_taxonomy WHERE sub_feature IS NULL) t LEFT JOIN (SELECT DISTINCT area, feature FROM t_analytics_events WHERE $__timeFilter(event_time) AND ('${client}' = 'All' OR client_id::text = '${client}') AND role ~ '^${role:regex}$') e ON e.area = t.area AND e.feature = t.feature WHERE e.feature IS NULL ORDER BY t.area, t.feature"
+          "rawSql": "SELECT t.area, t.feature, COALESCE(t.sub_feature, '(page-view)') AS sub_feature FROM t_sys_analytics_taxonomy t LEFT JOIN t_analytics_events e ON e.area = t.area AND e.feature = t.feature AND ((t.sub_feature IS NULL AND e.sub_feature IS NULL) OR e.sub_feature = t.sub_feature) AND $__timeFilter(e.event_time) AND ('${client}' = 'All' OR e.client_id::text = '${client}') AND e.role ~ '^${role:regex}$' WHERE e.area IS NULL AND ('${area}' = 'All' OR t.area = '${area}') AND ('${feature}' = 'All' OR t.feature = '${feature}') AND ('${sub_feature}' = 'All' OR COALESCE(t.sub_feature, '') = '${sub_feature}') ORDER BY t.area, t.feature, t.sub_feature NULLS FIRST"
         }
       ]
     },
