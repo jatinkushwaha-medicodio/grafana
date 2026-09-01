@@ -4,9 +4,9 @@
   "tags": ["medicodio", "analytics"],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 10,
+  "version": 11,
   "refresh": "1m",
-  "time": { "from": "now-30d", "to": "now" },
+  "time": { "from": "now-7d", "to": "now" },
   "templating": {
     "list": [
       {
@@ -16,16 +16,6 @@
         "query": "postgres",
         "regex": "/^Postgres \\((Dev|Uat|Prod)\\)$/",
         "current": { "text": "Postgres (Dev)", "value": "postgres_dev" },
-        "hide": 0,
-        "includeAll": false,
-        "multi": false
-      },
-      {
-        "name": "range",
-        "label": "Window",
-        "type": "custom",
-        "query": "7 days,30 days,90 days",
-        "current": { "text": "30 days", "value": "30 days" },
         "hide": 0,
         "includeAll": false,
         "multi": false
@@ -79,7 +69,7 @@
         "label": "Role",
         "type": "query",
         "datasource": { "type": "postgres", "uid": "${env_ds}" },
-        "query": "SELECT DISTINCT role FROM t_analytics_events WHERE event_time > now() - '${range}'::interval ORDER BY role",
+        "query": "SELECT DISTINCT role FROM t_analytics_events WHERE $__timeFilter(event_time) ORDER BY role",
         "refresh": 2,
         "includeAll": true,
         "allValue": ".*",
@@ -100,7 +90,7 @@
         {
           "refId": "A",
           "format": "table",
-          "rawSql": "SELECT area, COUNT(*)::int AS visits FROM t_analytics_events WHERE event_time > now() - '${range}'::interval AND ('${client}' = 'All' OR client_id::text = '${client}') AND role ~ '^${role:regex}$' AND ('${area}' = 'All' OR area = '${area}') AND ('${feature}' = 'All' OR feature = '${feature}') AND sub_feature IS NULL GROUP BY area ORDER BY visits DESC"
+          "rawSql": "SELECT area, COUNT(*)::int AS visits FROM t_analytics_events WHERE $__timeFilter(event_time) AND ('${client}' = 'All' OR client_id::text = '${client}') AND role ~ '^${role:regex}$' AND ('${area}' = 'All' OR area = '${area}') AND ('${feature}' = 'All' OR feature = '${feature}') AND sub_feature IS NULL GROUP BY area ORDER BY visits DESC"
         }
       ],
       "options": {
@@ -125,7 +115,7 @@
         {
           "refId": "A",
           "format": "table",
-          "rawSql": "SELECT area || ' → ' || feature AS page, COUNT(*)::int AS visits FROM t_analytics_events WHERE event_time > now() - '${range}'::interval AND ('${client}' = 'All' OR client_id::text = '${client}') AND role ~ '^${role:regex}$' AND ('${area}' = 'All' OR area = '${area}') AND ('${feature}' = 'All' OR feature = '${feature}') AND sub_feature IS NULL GROUP BY area, feature ORDER BY visits DESC LIMIT 25"
+          "rawSql": "SELECT area || ' → ' || feature AS page, COUNT(*)::int AS visits FROM t_analytics_events WHERE $__timeFilter(event_time) AND ('${client}' = 'All' OR client_id::text = '${client}') AND role ~ '^${role:regex}$' AND ('${area}' = 'All' OR area = '${area}') AND ('${feature}' = 'All' OR feature = '${feature}') AND sub_feature IS NULL GROUP BY area, feature ORDER BY visits DESC LIMIT 25"
         }
       ]
     },
@@ -140,7 +130,7 @@
         {
           "refId": "A",
           "format": "table",
-          "rawSql": "SELECT area || ' → ' || feature || ' → ' || sub_feature AS tab, COUNT(*)::int AS visits FROM t_analytics_events WHERE event_time > now() - '${range}'::interval AND ('${client}' = 'All' OR client_id::text = '${client}') AND role ~ '^${role:regex}$' AND ('${area}' = 'All' OR area = '${area}') AND ('${feature}' = 'All' OR feature = '${feature}') AND ('${sub_feature}' = 'All' OR sub_feature = '${sub_feature}') AND sub_feature IS NOT NULL GROUP BY area, feature, sub_feature ORDER BY visits DESC LIMIT 25"
+          "rawSql": "SELECT area || ' → ' || feature || ' → ' || sub_feature AS tab, COUNT(*)::int AS visits FROM t_analytics_events WHERE $__timeFilter(event_time) AND ('${client}' = 'All' OR client_id::text = '${client}') AND role ~ '^${role:regex}$' AND ('${area}' = 'All' OR area = '${area}') AND ('${feature}' = 'All' OR feature = '${feature}') AND ('${sub_feature}' = 'All' OR sub_feature = '${sub_feature}') AND sub_feature IS NOT NULL GROUP BY area, feature, sub_feature ORDER BY visits DESC LIMIT 25"
         }
       ]
     },
@@ -155,7 +145,7 @@
         {
           "refId": "A",
           "format": "table",
-          "rawSql": "SELECT role, COUNT(*)::int AS visits FROM t_analytics_events WHERE event_time > now() - '${range}'::interval AND ('${client}' = 'All' OR client_id::text = '${client}') AND role ~ '^${role:regex}$' AND ('${area}' = 'All' OR area = '${area}') AND ('${feature}' = 'All' OR feature = '${feature}') AND ('${sub_feature}' = 'All' OR sub_feature = '${sub_feature}') GROUP BY role ORDER BY visits DESC"
+          "rawSql": "SELECT role, COUNT(*)::int AS visits FROM t_analytics_events WHERE $__timeFilter(event_time) AND ('${client}' = 'All' OR client_id::text = '${client}') AND role ~ '^${role:regex}$' AND ('${area}' = 'All' OR area = '${area}') AND ('${feature}' = 'All' OR feature = '${feature}') AND ('${sub_feature}' = 'All' OR sub_feature = '${sub_feature}') GROUP BY role ORDER BY visits DESC"
         }
       ],
       "options": {
@@ -190,7 +180,7 @@
         {
           "refId": "A",
           "format": "table",
-          "rawSql": "SELECT c.name AS client, COUNT(*)::int AS events, COUNT(DISTINCT ae.user_id)::int AS active_users FROM t_analytics_events ae JOIN t_org_clients c ON c.id = ae.client_id WHERE ae.event_time > now() - '${range}'::interval AND ('${area}' = 'All' OR ae.area = '${area}') AND ('${feature}' = 'All' OR ae.feature = '${feature}') AND ('${sub_feature}' = 'All' OR ae.sub_feature = '${sub_feature}') GROUP BY c.name ORDER BY events DESC"
+          "rawSql": "SELECT c.name AS client, COUNT(*)::int AS events, COUNT(DISTINCT ae.user_id)::int AS active_users FROM t_analytics_events ae JOIN t_org_clients c ON c.id = ae.client_id WHERE $__timeFilter(ae.event_time) AND ('${area}' = 'All' OR ae.area = '${area}') AND ('${feature}' = 'All' OR ae.feature = '${feature}') AND ('${sub_feature}' = 'All' OR ae.sub_feature = '${sub_feature}') GROUP BY c.name ORDER BY events DESC"
         }
       ]
     },
@@ -205,7 +195,7 @@
         {
           "refId": "A",
           "format": "table",
-          "rawSql": "SELECT t.area, t.feature FROM (SELECT DISTINCT area, feature FROM t_sys_analytics_taxonomy WHERE sub_feature IS NULL) t LEFT JOIN (SELECT DISTINCT area, feature FROM t_analytics_events WHERE event_time > now() - '${range}'::interval AND ('${client}' = 'All' OR client_id::text = '${client}') AND role ~ '^${role:regex}$') e ON e.area = t.area AND e.feature = t.feature WHERE e.feature IS NULL ORDER BY t.area, t.feature"
+          "rawSql": "SELECT t.area, t.feature FROM (SELECT DISTINCT area, feature FROM t_sys_analytics_taxonomy WHERE sub_feature IS NULL) t LEFT JOIN (SELECT DISTINCT area, feature FROM t_analytics_events WHERE $__timeFilter(event_time) AND ('${client}' = 'All' OR client_id::text = '${client}') AND role ~ '^${role:regex}$') e ON e.area = t.area AND e.feature = t.feature WHERE e.feature IS NULL ORDER BY t.area, t.feature"
         }
       ]
     },
@@ -220,7 +210,7 @@
         {
           "refId": "A",
           "format": "table",
-          "rawSql": "WITH ordered AS (SELECT session_id, area, event_time, LEAD(area) OVER (PARTITION BY session_id ORDER BY event_time) AS next_area FROM t_analytics_events WHERE event_time > now() - '${range}'::interval AND ('${client}' = 'All' OR client_id::text = '${client}') AND role ~ '^${role:regex}$' AND ('${area}' = 'All' OR area = '${area}') AND ('${feature}' = 'All' OR feature = '${feature}')) SELECT area AS source, next_area AS target, COUNT(*)::int AS value FROM ordered WHERE next_area IS NOT NULL AND area <> next_area GROUP BY 1, 2 ORDER BY value DESC LIMIT 25"
+          "rawSql": "WITH ordered AS (SELECT session_id, area, event_time, LEAD(area) OVER (PARTITION BY session_id ORDER BY event_time) AS next_area FROM t_analytics_events WHERE $__timeFilter(event_time) AND ('${client}' = 'All' OR client_id::text = '${client}') AND role ~ '^${role:regex}$' AND ('${area}' = 'All' OR area = '${area}') AND ('${feature}' = 'All' OR feature = '${feature}')) SELECT area AS source, next_area AS target, COUNT(*)::int AS value FROM ordered WHERE next_area IS NOT NULL AND area <> next_area GROUP BY 1, 2 ORDER BY value DESC LIMIT 25"
         }
       ],
       "options": {
@@ -241,7 +231,7 @@
         {
           "refId": "A",
           "format": "table",
-          "rawSql": "SELECT (date_trunc('day', event_time) + (EXTRACT(HOUR FROM event_time) || ' hours')::interval) AS time, to_char(event_time, 'ID_Dy') AS dow, COUNT(*)::int AS events FROM t_analytics_events WHERE event_time > now() - '${range}'::interval AND ('${client}' = 'All' OR client_id::text = '${client}') AND role ~ '^${role:regex}$' AND ('${area}' = 'All' OR area = '${area}') AND ('${feature}' = 'All' OR feature = '${feature}') GROUP BY 1, 2 ORDER BY 1, 2"
+          "rawSql": "SELECT (date_trunc('day', event_time) + (EXTRACT(HOUR FROM event_time) || ' hours')::interval) AS time, to_char(event_time, 'ID_Dy') AS dow, COUNT(*)::int AS events FROM t_analytics_events WHERE $__timeFilter(event_time) AND ('${client}' = 'All' OR client_id::text = '${client}') AND role ~ '^${role:regex}$' AND ('${area}' = 'All' OR area = '${area}') AND ('${feature}' = 'All' OR feature = '${feature}') GROUP BY 1, 2 ORDER BY 1, 2"
         }
       ],
       "options": {
