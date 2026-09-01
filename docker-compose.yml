@@ -128,18 +128,35 @@ services:
       GF_AUTH_GENERIC_OAUTH_USE_PKCE: "true"
       # Single Teams webhook that receives every alert. Message body carries
       # the env label so DEV / UAT / PROD alerts land in the same channel.
-      TEAMS_WEBHOOK_URL: ${TEAMS_WEBHOOK_URL:-}
-      # App-DB (Postgres) read-only datasource for product-usage analytics.
-      # Blank values leave the datasource registered but non-functional until
-      # the grafana_ro role + creds are provisioned on the app DB.
-      APP_DB_HOST: ${APP_DB_HOST:-}
-      APP_DB_PORT: ${APP_DB_PORT:-5432}
-      APP_DB_NAME: ${APP_DB_NAME:-}
-      APP_DB_ANALYTICS_USER: ${APP_DB_ANALYTICS_USER:-}
-      APP_DB_ANALYTICS_PASSWORD: ${APP_DB_ANALYTICS_PASSWORD:-}
-      # Postgres SSL mode. Cloud/prod DBs → require. Local Docker Desktop
-      # Postgres → disable. Default is require so prod stays secure by default.
-      APP_DB_SSLMODE: ${APP_DB_SSLMODE:-require}
+      # Placeholder default keeps Grafana's alerting provisioner from crashing
+      # on local/first-boot when no real webhook is set — resolves to a
+      # non-routable URL. Set the real value on the VM.
+      TEAMS_WEBHOOK_URL: ${TEAMS_WEBHOOK_URL:-https://example.invalid/none}
+      # Per-env app-DB creds for product-usage analytics datasources.
+      # Populate the ones you use in .env.grafana; blank leaves the datasource
+      # registered but queries fail with "no data" — safe. Grafana picks a
+      # single env via the dashboard's `env_ds` template variable, so a viewer
+      # never sees cross-env data by accident.
+      APP_DB_DEV_HOST: ${APP_DB_DEV_HOST:-}
+      APP_DB_DEV_PORT: ${APP_DB_DEV_PORT:-5432}
+      APP_DB_DEV_NAME: ${APP_DB_DEV_NAME:-}
+      APP_DB_DEV_ANALYTICS_USER: ${APP_DB_DEV_ANALYTICS_USER:-}
+      APP_DB_DEV_ANALYTICS_PASSWORD: ${APP_DB_DEV_ANALYTICS_PASSWORD:-}
+      APP_DB_DEV_SSLMODE: ${APP_DB_DEV_SSLMODE:-require}
+
+      APP_DB_UAT_HOST: ${APP_DB_UAT_HOST:-}
+      APP_DB_UAT_PORT: ${APP_DB_UAT_PORT:-5432}
+      APP_DB_UAT_NAME: ${APP_DB_UAT_NAME:-}
+      APP_DB_UAT_ANALYTICS_USER: ${APP_DB_UAT_ANALYTICS_USER:-}
+      APP_DB_UAT_ANALYTICS_PASSWORD: ${APP_DB_UAT_ANALYTICS_PASSWORD:-}
+      APP_DB_UAT_SSLMODE: ${APP_DB_UAT_SSLMODE:-require}
+
+      APP_DB_PROD_HOST: ${APP_DB_PROD_HOST:-}
+      APP_DB_PROD_PORT: ${APP_DB_PROD_PORT:-5432}
+      APP_DB_PROD_NAME: ${APP_DB_PROD_NAME:-}
+      APP_DB_PROD_ANALYTICS_USER: ${APP_DB_PROD_ANALYTICS_USER:-}
+      APP_DB_PROD_ANALYTICS_PASSWORD: ${APP_DB_PROD_ANALYTICS_PASSWORD:-}
+      APP_DB_PROD_SSLMODE: ${APP_DB_PROD_SSLMODE:-require}
     volumes:
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
       - ./grafana/dashboards:/var/lib/grafana/dashboards:ro

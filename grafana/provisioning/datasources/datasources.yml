@@ -30,27 +30,52 @@ datasources:
           datasourceUid: loki
           url: '${__value.raw}'
 
-  # App-DB read-only datasource for product-usage analytics dashboards.
-  # Populated from .env.grafana on the monitoring VM:
-  #   APP_DB_HOST, APP_DB_PORT, APP_DB_NAME, APP_DB_ANALYTICS_USER,
-  #   APP_DB_ANALYTICS_PASSWORD (grafana_ro role with BYPASSRLS).
-  # If any of these are blank the datasource loads but queries fail — panels
-  # will show "No data" until the values are set.
-  - name: Postgres (App)
-    uid: postgres_app
+  # ── Per-env app-DB datasources for product-usage analytics ─────────────
+  # One entry per environment. Populate the matching APP_DB_<ENV>_* vars in
+  # .env.grafana on the monitoring VM (see monitoring/docker-compose.yml).
+  # Blank creds leave the datasource registered but queries fail with "no
+  # data" — safe. Dashboards pick which one via the `env_ds` template var.
+  - name: Postgres (Dev)
+    uid: postgres_dev
     type: postgres
     access: proxy
-    url: ${APP_DB_HOST}:${APP_DB_PORT}
-    database: ${APP_DB_NAME}
-    user: ${APP_DB_ANALYTICS_USER}
+    url: ${APP_DB_DEV_HOST}:${APP_DB_DEV_PORT}
+    database: ${APP_DB_DEV_NAME}
+    user: ${APP_DB_DEV_ANALYTICS_USER}
     editable: false
     jsonData:
-      # Local Postgres usually has no TLS → set APP_DB_SSLMODE=disable in
-      # monitoring/.env. Cloud / dev / prod DBs → set APP_DB_SSLMODE=require.
-      # Compose supplies a `require` default when the var isn't set (see
-      # docker-compose.yml grafana env block).
-      sslmode: ${APP_DB_SSLMODE}
+      sslmode: ${APP_DB_DEV_SSLMODE}
       postgresVersion: 1500
       timescaledb: false
     secureJsonData:
-      password: ${APP_DB_ANALYTICS_PASSWORD}
+      password: ${APP_DB_DEV_ANALYTICS_PASSWORD}
+
+  - name: Postgres (Uat)
+    uid: postgres_uat
+    type: postgres
+    access: proxy
+    url: ${APP_DB_UAT_HOST}:${APP_DB_UAT_PORT}
+    database: ${APP_DB_UAT_NAME}
+    user: ${APP_DB_UAT_ANALYTICS_USER}
+    editable: false
+    jsonData:
+      sslmode: ${APP_DB_UAT_SSLMODE}
+      postgresVersion: 1500
+      timescaledb: false
+    secureJsonData:
+      password: ${APP_DB_UAT_ANALYTICS_PASSWORD}
+
+  - name: Postgres (Prod)
+    uid: postgres_prod
+    type: postgres
+    access: proxy
+    url: ${APP_DB_PROD_HOST}:${APP_DB_PROD_PORT}
+    database: ${APP_DB_PROD_NAME}
+    user: ${APP_DB_PROD_ANALYTICS_USER}
+    editable: false
+    jsonData:
+      sslmode: ${APP_DB_PROD_SSLMODE}
+      postgresVersion: 1500
+      timescaledb: false
+    secureJsonData:
+      password: ${APP_DB_PROD_ANALYTICS_PASSWORD}

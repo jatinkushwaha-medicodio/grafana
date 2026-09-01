@@ -4,11 +4,22 @@
   "tags": ["medicodio", "analytics"],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 6,
+  "version": 7,
   "refresh": "1m",
   "time": { "from": "now-30d", "to": "now" },
   "templating": {
     "list": [
+      {
+        "name": "env_ds",
+        "label": "Environment",
+        "type": "datasource",
+        "query": "postgres",
+        "regex": "/^Postgres \\((Dev|Uat|Prod)\\)$/",
+        "current": { "text": "Postgres (Dev)", "value": "postgres_dev" },
+        "hide": 0,
+        "includeAll": false,
+        "multi": false
+      },
       {
         "name": "range",
         "label": "Window",
@@ -23,7 +34,7 @@
         "name": "client",
         "label": "Client",
         "type": "query",
-        "datasource": { "type": "postgres", "uid": "postgres_app" },
+        "datasource": { "type": "postgres", "uid": "${env_ds}" },
         "query": "SELECT 'All' AS __text, 'All' AS __value UNION ALL SELECT name AS __text, id::text AS __value FROM t_org_clients ORDER BY __text",
         "refresh": 2,
         "includeAll": false,
@@ -34,7 +45,7 @@
         "name": "area",
         "label": "Area",
         "type": "query",
-        "datasource": { "type": "postgres", "uid": "postgres_app" },
+        "datasource": { "type": "postgres", "uid": "${env_ds}" },
         "query": "SELECT 'All' AS __text, 'All' AS __value UNION ALL SELECT DISTINCT area AS __text, area AS __value FROM t_sys_analytics_taxonomy ORDER BY __text",
         "refresh": 2,
         "includeAll": false,
@@ -45,7 +56,7 @@
         "name": "feature",
         "label": "Feature",
         "type": "query",
-        "datasource": { "type": "postgres", "uid": "postgres_app" },
+        "datasource": { "type": "postgres", "uid": "${env_ds}" },
         "query": "SELECT 'All' AS __text, 'All' AS __value UNION ALL SELECT DISTINCT feature AS __text, feature AS __value FROM t_sys_analytics_taxonomy WHERE ('${area}' = 'All' OR area = '${area}') ORDER BY __text",
         "refresh": 2,
         "includeAll": false,
@@ -56,7 +67,7 @@
         "name": "sub_feature",
         "label": "Sub-feature",
         "type": "query",
-        "datasource": { "type": "postgres", "uid": "postgres_app" },
+        "datasource": { "type": "postgres", "uid": "${env_ds}" },
         "query": "SELECT 'All' AS __text, 'All' AS __value UNION ALL SELECT DISTINCT sub_feature AS __text, sub_feature AS __value FROM t_sys_analytics_taxonomy WHERE sub_feature IS NOT NULL AND ('${area}' = 'All' OR area = '${area}') AND ('${feature}' = 'All' OR feature = '${feature}') ORDER BY __text",
         "refresh": 2,
         "includeAll": false,
@@ -72,7 +83,7 @@
       "description": "Top-level areas ranked by page-visit count. One visit = one route-level entry into the area; internal tab switches within a page do NOT inflate this count (see the Nested tabs panel for those).",
       "type": "barchart",
       "gridPos": { "x": 0, "y": 0, "w": 12, "h": 9 },
-      "datasource": { "type": "postgres", "uid": "postgres_app" },
+      "datasource": { "type": "postgres", "uid": "${env_ds}" },
       "targets": [
         {
           "refId": "A",
@@ -97,7 +108,7 @@
       "description": "Pages / features people actually open, counted as page visits only. Tab switches inside a page do NOT inflate this count.",
       "type": "table",
       "gridPos": { "x": 12, "y": 0, "w": 12, "h": 9 },
-      "datasource": { "type": "postgres", "uid": "postgres_app" },
+      "datasource": { "type": "postgres", "uid": "${env_ds}" },
       "targets": [
         {
           "refId": "A",
@@ -112,7 +123,7 @@
       "description": "Deepest level — which tabs inside a feature people actually open. Rows only appear when a sub_feature is recorded.",
       "type": "table",
       "gridPos": { "x": 0, "y": 9, "w": 12, "h": 9 },
-      "datasource": { "type": "postgres", "uid": "postgres_app" },
+      "datasource": { "type": "postgres", "uid": "${env_ds}" },
       "targets": [
         {
           "refId": "A",
@@ -127,7 +138,7 @@
       "description": "Which roles produce the traffic. Only roles listed in the client's analytics.tracked_roles are recorded — everyone else is invisible to this dashboard by design.",
       "type": "piechart",
       "gridPos": { "x": 12, "y": 9, "w": 12, "h": 9 },
-      "datasource": { "type": "postgres", "uid": "postgres_app" },
+      "datasource": { "type": "postgres", "uid": "${env_ds}" },
       "targets": [
         {
           "refId": "A",
@@ -162,7 +173,7 @@
       "description": "One row per client. `active_users` counts distinct user_id in the window — a truer signal of adoption than raw event count.",
       "type": "table",
       "gridPos": { "x": 0, "y": 18, "w": 12, "h": 9 },
-      "datasource": { "type": "postgres", "uid": "postgres_app" },
+      "datasource": { "type": "postgres", "uid": "${env_ds}" },
       "targets": [
         {
           "refId": "A",
@@ -177,7 +188,7 @@
       "description": "Features in the taxonomy that recorded ZERO events in the window. Sourced from t_sys_analytics_taxonomy (LEFT JOIN vs events) so every declared feature is accountable — not just the ones that happened to fire.",
       "type": "table",
       "gridPos": { "x": 12, "y": 18, "w": 12, "h": 9 },
-      "datasource": { "type": "postgres", "uid": "postgres_app" },
+      "datasource": { "type": "postgres", "uid": "${env_ds}" },
       "targets": [
         {
           "refId": "A",
