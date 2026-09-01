@@ -4,7 +4,7 @@
   "tags": ["medicodio", "analytics"],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 7,
+  "version": 8,
   "refresh": "1m",
   "time": { "from": "now-30d", "to": "now" },
   "templating": {
@@ -73,6 +73,18 @@
         "includeAll": false,
         "multi": false,
         "current": { "text": "All", "value": "All" }
+      },
+      {
+        "name": "role",
+        "label": "Role",
+        "type": "query",
+        "datasource": { "type": "postgres", "uid": "${env_ds}" },
+        "query": "SELECT DISTINCT role FROM t_analytics_events WHERE event_time > now() - '${range}'::interval ORDER BY role",
+        "refresh": 2,
+        "includeAll": true,
+        "allValue": ".*",
+        "multi": true,
+        "current": { "text": "All", "value": ["$__all"] }
       }
     ]
   },
@@ -88,7 +100,7 @@
         {
           "refId": "A",
           "format": "table",
-          "rawSql": "SELECT area, COUNT(*)::int AS visits FROM t_analytics_events WHERE event_time > now() - '${range}'::interval AND ('${client}' = 'All' OR client_id::text = '${client}') AND ('${area}' = 'All' OR area = '${area}') AND ('${feature}' = 'All' OR feature = '${feature}') AND sub_feature IS NULL GROUP BY area ORDER BY visits DESC"
+          "rawSql": "SELECT area, COUNT(*)::int AS visits FROM t_analytics_events WHERE event_time > now() - '${range}'::interval AND ('${client}' = 'All' OR client_id::text = '${client}') AND role ~ '^${role:regex}$' AND ('${area}' = 'All' OR area = '${area}') AND ('${feature}' = 'All' OR feature = '${feature}') AND sub_feature IS NULL GROUP BY area ORDER BY visits DESC"
         }
       ],
       "options": {
@@ -113,7 +125,7 @@
         {
           "refId": "A",
           "format": "table",
-          "rawSql": "SELECT area || ' → ' || feature AS page, COUNT(*)::int AS visits FROM t_analytics_events WHERE event_time > now() - '${range}'::interval AND ('${client}' = 'All' OR client_id::text = '${client}') AND ('${area}' = 'All' OR area = '${area}') AND ('${feature}' = 'All' OR feature = '${feature}') AND sub_feature IS NULL GROUP BY area, feature ORDER BY visits DESC LIMIT 25"
+          "rawSql": "SELECT area || ' → ' || feature AS page, COUNT(*)::int AS visits FROM t_analytics_events WHERE event_time > now() - '${range}'::interval AND ('${client}' = 'All' OR client_id::text = '${client}') AND role ~ '^${role:regex}$' AND ('${area}' = 'All' OR area = '${area}') AND ('${feature}' = 'All' OR feature = '${feature}') AND sub_feature IS NULL GROUP BY area, feature ORDER BY visits DESC LIMIT 25"
         }
       ]
     },
@@ -128,14 +140,14 @@
         {
           "refId": "A",
           "format": "table",
-          "rawSql": "SELECT area || ' → ' || feature || ' → ' || sub_feature AS tab, COUNT(*)::int AS visits FROM t_analytics_events WHERE event_time > now() - '${range}'::interval AND ('${client}' = 'All' OR client_id::text = '${client}') AND ('${area}' = 'All' OR area = '${area}') AND ('${feature}' = 'All' OR feature = '${feature}') AND ('${sub_feature}' = 'All' OR sub_feature = '${sub_feature}') AND sub_feature IS NOT NULL GROUP BY area, feature, sub_feature ORDER BY visits DESC LIMIT 25"
+          "rawSql": "SELECT area || ' → ' || feature || ' → ' || sub_feature AS tab, COUNT(*)::int AS visits FROM t_analytics_events WHERE event_time > now() - '${range}'::interval AND ('${client}' = 'All' OR client_id::text = '${client}') AND role ~ '^${role:regex}$' AND ('${area}' = 'All' OR area = '${area}') AND ('${feature}' = 'All' OR feature = '${feature}') AND ('${sub_feature}' = 'All' OR sub_feature = '${sub_feature}') AND sub_feature IS NOT NULL GROUP BY area, feature, sub_feature ORDER BY visits DESC LIMIT 25"
         }
       ]
     },
     {
       "id": 4,
       "title": "Usage by role",
-      "description": "Which roles produce the traffic. Only roles listed in the client's analytics.tracked_roles are recorded — everyone else is invisible to this dashboard by design.",
+      "description": "Which roles produce the traffic. Default is all roles across every env; narrow with the Role dropdown above, or set analytics.tracked_roles on a client to opt-out / restrict.",
       "type": "piechart",
       "gridPos": { "x": 12, "y": 9, "w": 12, "h": 9 },
       "datasource": { "type": "postgres", "uid": "${env_ds}" },
@@ -143,7 +155,7 @@
         {
           "refId": "A",
           "format": "table",
-          "rawSql": "SELECT role, COUNT(*)::int AS visits FROM t_analytics_events WHERE event_time > now() - '${range}'::interval AND ('${client}' = 'All' OR client_id::text = '${client}') AND ('${area}' = 'All' OR area = '${area}') AND ('${feature}' = 'All' OR feature = '${feature}') AND ('${sub_feature}' = 'All' OR sub_feature = '${sub_feature}') GROUP BY role ORDER BY visits DESC"
+          "rawSql": "SELECT role, COUNT(*)::int AS visits FROM t_analytics_events WHERE event_time > now() - '${range}'::interval AND ('${client}' = 'All' OR client_id::text = '${client}') AND role ~ '^${role:regex}$' AND ('${area}' = 'All' OR area = '${area}') AND ('${feature}' = 'All' OR feature = '${feature}') AND ('${sub_feature}' = 'All' OR sub_feature = '${sub_feature}') GROUP BY role ORDER BY visits DESC"
         }
       ],
       "options": {
@@ -193,7 +205,7 @@
         {
           "refId": "A",
           "format": "table",
-          "rawSql": "SELECT t.area, t.feature FROM (SELECT DISTINCT area, feature FROM t_sys_analytics_taxonomy WHERE sub_feature IS NULL) t LEFT JOIN (SELECT DISTINCT area, feature FROM t_analytics_events WHERE event_time > now() - '${range}'::interval AND ('${client}' = 'All' OR client_id::text = '${client}')) e ON e.area = t.area AND e.feature = t.feature WHERE e.feature IS NULL ORDER BY t.area, t.feature"
+          "rawSql": "SELECT t.area, t.feature FROM (SELECT DISTINCT area, feature FROM t_sys_analytics_taxonomy WHERE sub_feature IS NULL) t LEFT JOIN (SELECT DISTINCT area, feature FROM t_analytics_events WHERE event_time > now() - '${range}'::interval AND ('${client}' = 'All' OR client_id::text = '${client}') AND role ~ '^${role:regex}$') e ON e.area = t.area AND e.feature = t.feature WHERE e.feature IS NULL ORDER BY t.area, t.feature"
         }
       ]
     }
