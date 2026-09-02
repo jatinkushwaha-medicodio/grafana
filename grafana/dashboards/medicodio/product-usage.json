@@ -4,7 +4,7 @@
   "tags": ["medicodio", "analytics"],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 12,
+  "version": 13,
   "refresh": "1m",
   "time": { "from": "now-7d", "to": "now" },
   "templating": {
@@ -223,33 +223,26 @@
     {
       "id": 8,
       "title": "Peak hours — hour × weekday",
-      "description": "When users actually work. Rows = weekday (Mon → Sun), columns = hour-of-day in the tenant's browser timezone. Deeper colour = more events. Use to time cron jobs, deploys, maintenance windows.",
-      "type": "heatmap",
+      "description": "When users actually work. Rows = weekday (Mon → Sun), columns = hour-of-day in the tenant's browser timezone. Deeper colour = more events. Use to time cron jobs, deploys, maintenance windows. Requires the `marcusolsson-hourly-heatmap-panel` plugin (installed via docker-compose GF_INSTALL_PLUGINS) — Grafana's native heatmap only supports time on the X axis and cannot render a real hour-of-day × day-of-week grid.",
+      "type": "marcusolsson-hourly-heatmap-panel",
       "gridPos": { "x": 0, "y": 38, "w": 24, "h": 11 },
       "datasource": { "type": "postgres", "uid": "${env_ds}" },
       "targets": [
         {
           "refId": "A",
-          "format": "table",
-          "rawSql": "SELECT (date_trunc('day', event_time) + (EXTRACT(HOUR FROM event_time) || ' hours')::interval) AS time, to_char(event_time, 'ID_Dy') AS dow, COUNT(*)::int AS events FROM t_analytics_events WHERE $__timeFilter(event_time) AND ('${client}' = 'All' OR client_id::text = '${client}') AND role ~ '^${role:regex}$' AND ('${area}' = 'All' OR area = '${area}') AND ('${feature}' = 'All' OR feature = '${feature}') GROUP BY 1, 2 ORDER BY 1, 2"
+          "format": "time_series",
+          "rawSql": "SELECT date_trunc('hour', event_time) AS time, COUNT(*)::int AS value FROM t_analytics_events WHERE $__timeFilter(event_time) AND ('${client}' = 'All' OR client_id::text = '${client}') AND role ~ '^${role:regex}$' AND ('${area}' = 'All' OR area = '${area}') AND ('${feature}' = 'All' OR feature = '${feature}') GROUP BY 1 ORDER BY 1"
         }
       ],
       "options": {
-        "calculate": false,
-        "cellGap": 2,
-        "cellRadius": 2,
-        "color": { "mode": "scheme", "scheme": "Turbo", "steps": 64, "reverse": false, "exponent": 0.5 },
-        "yAxis": { "axisPlacement": "left", "reverse": false },
-        "rowsFrame": { "layout": "auto", "value": "events" },
-        "tooltip": { "mode": "single", "yHistogram": false },
-        "legend": { "show": true },
-        "exemplars": { "color": "rgba(255,0,255,0.7)" },
-        "filterValues": { "le": 1e-9 }
-      },
-      "fieldConfig": {
-        "defaults": {
-          "custom": { "scaleDistribution": { "type": "linear" }, "hideFrom": { "tooltip": false, "viz": false, "legend": false } }
-        }
+        "colorPalette": "interpolateViridis",
+        "showLegend": true,
+        "showValues": "never",
+        "from": "0",
+        "to": "24",
+        "groupBy": "1h",
+        "calculation": "sum",
+        "weekStart": "monday"
       }
     }
   ]

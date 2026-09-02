@@ -106,11 +106,13 @@ services:
       GF_SERVER_ROOT_URL: ${GF_SERVER_ROOT_URL:-http://localhost:3030}
       GF_USERS_ALLOW_SIGN_UP: "false"
       GF_USERS_AUTO_ASSIGN_ORG_ROLE: Viewer
-      # Community Sankey panel — used by the Product Usage dashboard's
-      # "Area transitions" panel. Signature is community, not signed by
-      # Grafana Labs, so allow-list it explicitly.
-      GF_INSTALL_PLUGINS: netsage-sankey-panel
-      GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS: netsage-sankey-panel
+      # Community panels used by the Product Usage dashboard:
+      #   - netsage-sankey-panel                  (P7 Area transitions)
+      #   - marcusolsson-hourly-heatmap-panel     (P8 Peak hours grid — hour × weekday,
+      #                                            native heatmap only does time-on-X)
+      # Neither is signed by Grafana Labs; allow-list explicitly.
+      GF_INSTALL_PLUGINS: netsage-sankey-panel,marcusolsson-hourly-heatmap-panel
+      GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS: netsage-sankey-panel,marcusolsson-hourly-heatmap-panel
       GF_AUTH_ANONYMOUS_ENABLED: "false"
       # Microsoft OAuth — populated from .env when team SSO is wired.
       GF_AUTH_GENERIC_OAUTH_ENABLED: ${GF_OAUTH_ENABLED:-false}
