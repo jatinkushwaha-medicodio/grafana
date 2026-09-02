@@ -39,17 +39,18 @@ scrape_configs:
       - files: [/etc/prometheus/targets/app-dev.yml]
         refresh_interval: 1m
 
-  # UAT + PROD scrape jobs disabled until those envs are wired.
-  # - job_name: app-uat
-  #   metrics_path: /metrics
-  #   scheme: http
-  #   authorization:
-  #     type: Bearer
-  #     credentials_file: /run/secrets/uat_metrics_token
-  #   file_sd_configs:
-  #     - files: [/etc/prometheus/targets/app-uat.yml]
-  #       refresh_interval: 1m
-  #
+  # UAT job — same VM as dev, port 8001. Bearer auth via UAT_METRICS_TOKEN.
+  - job_name: app-uat
+    metrics_path: /metrics
+    scheme: http
+    authorization:
+      type: Bearer
+      credentials_file: /run/secrets/uat_metrics_token
+    file_sd_configs:
+      - files: [/etc/prometheus/targets/app-uat.yml]
+        refresh_interval: 1m
+
+  # PROD scrape job disabled until that env is wired.
   # - job_name: app-prod
   #   metrics_path: /metrics
   #   scheme: https

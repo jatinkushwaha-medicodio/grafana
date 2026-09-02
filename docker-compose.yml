@@ -33,7 +33,7 @@ services:
       - --web.console.templates=/usr/share/prometheus/consoles
     secrets:
       - dev_metrics_token
-      # - uat_metrics_token   # re-enable when UAT wiring lands
+      - uat_metrics_token
       # - prod_metrics_token  # re-enable when PROD wiring lands
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
@@ -41,7 +41,7 @@ services:
       # repo never ships to the VM. Override file adds `app-local.yml` on dev
       # machines.
       - ./prometheus/targets/app-dev.yml:/etc/prometheus/targets/app-dev.yml:ro
-      # - ./prometheus/targets/app-uat.yml:/etc/prometheus/targets/app-uat.yml:ro
+      - ./prometheus/targets/app-uat.yml:/etc/prometheus/targets/app-uat.yml:ro
       # - ./prometheus/targets/app-prod.yml:/etc/prometheus/targets/app-prod.yml:ro
       - ./prometheus/targets/node-shared.yml:/etc/prometheus/targets/node-shared.yml:ro
       - prom-data:/prometheus
@@ -189,7 +189,7 @@ volumes:
 secrets:
   dev_metrics_token:
     environment: DEV_METRICS_TOKEN
-  # uat_metrics_token:
-  #   environment: UAT_METRICS_TOKEN
+  uat_metrics_token:
+    environment: UAT_METRICS_TOKEN
   # prod_metrics_token:
   #   environment: PROD_METRICS_TOKEN
