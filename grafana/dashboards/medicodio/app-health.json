@@ -4,7 +4,7 @@
   "tags": ["medicodio"],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 9,
+  "version": 10,
   "refresh": "30s",
   "time": { "from": "now-1h", "to": "now" },
   "templating": {
@@ -165,7 +165,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "{env=~\"$env\",service=\"medicodio-app\"} | json | __error__=\"\" | level=\"error\""
+          "expr": "{env=~\"$env\",service=~\"medicodio-.*\"} | json | __error__=\"\" | level=\"error\""
         }
       ],
       "options": { "showTime": true, "wrapLogMessage": true }
@@ -221,7 +221,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "{env=~\"$env\",service=\"medicodio-app\"}"
+          "expr": "{env=~\"$env\",service=~\"medicodio-.*\"}"
         }
       ],
       "options": { "showTime": true, "wrapLogMessage": true }
