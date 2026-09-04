@@ -4,7 +4,7 @@
   "tags": ["medicodio"],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 10,
+  "version": 11,
   "refresh": "30s",
   "time": { "from": "now-1h", "to": "now" },
   "templating": {
@@ -158,14 +158,14 @@
     {
       "id": 8,
       "title": "Errors",
-      "description": "Live tail of log lines where level=error. First place to look when something breaks.",
+      "description": "Log lines where level=error OR the HTTP access line is a 5xx. Morgan writes access logs at level=info so a raw `level=error` filter would miss server errors entirely — the regex on the response-status field catches those.",
       "type": "logs",
       "gridPos": { "x": 12, "y": 20, "w": 12, "h": 6 },
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
           "refId": "A",
-          "expr": "{env=~\"$env\",service=~\"medicodio-.*\"} | json | __error__=\"\" | level=\"error\""
+          "expr": "{env=~\"$env\",service=~\"medicodio-.*\"} | json | __error__=\"\" | level=\"error\" or message=~`.*\" 5[0-9]{2} .*`"
         }
       ],
       "options": { "showTime": true, "wrapLogMessage": true }
@@ -180,7 +180,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "topk(5, sum by (route) (rate(app_http_request_duration_seconds_count{env=~\"$env\",status_class=\"5xx\"}[5m])))",
+          "expr": "topk(5, sum by (route) (rate(app_http_request_duration_seconds_count{env=~\"$env\",status_class=\"5xx\"}[5m])) > 0)",
           "instant": true,
           "format": "table"
         }
