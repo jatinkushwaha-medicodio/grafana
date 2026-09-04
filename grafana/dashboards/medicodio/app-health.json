@@ -4,7 +4,7 @@
   "tags": ["medicodio"],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 11,
+  "version": 12,
   "refresh": "30s",
   "time": { "from": "now-1h", "to": "now" },
   "templating": {
@@ -141,15 +141,15 @@
     },
     {
       "id": 7,
-      "title": "Job runs — last 1h",
-      "description": "How many times each background job ran in the last hour, split by outcome (success / failure). Failures column non-zero = investigate. Empty on dev/uat because jobs are off there.",
+      "title": "Job runs (visible range)",
+      "description": "How many times each background job ran in the currently-selected time range, split by outcome (success / failure). Failures column non-zero = investigate. Empty on dev/uat because jobs are off there.",
       "type": "table",
       "gridPos": { "x": 0, "y": 26, "w": 12, "h": 6 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (job, outcome) (increase(app_job_runs_total{env=~\"$env\"}[1h]))",
+          "expr": "sum by (job, outcome) (increase(app_job_runs_total{env=~\"$env\"}[$__range]))",
           "instant": true,
           "format": "table"
         }
@@ -172,15 +172,15 @@
     },
     {
       "id": 11,
-      "title": "Top 5 routes by 5xx rate",
-      "description": "Which routes are throwing server errors (HTTP 5xx) right now. Empty = zero 5xx across the app. First place to look when the error rate panel goes red — turns 'the app is broken' into 'route X is broken.'",
+      "title": "Top 5 routes by 5xx count (visible range)",
+      "description": "How many HTTP 5xx responses each route returned across the currently-selected time range on the picker (not just the last 5m). `increase()` over `$__range` gives a total count for the window, so shifting the range changes what you see. Note: application errors logged at level=error inside a route that still returned 200 (e.g. swallowed audit failures) do NOT show up here — see the Errors panel for those.",
       "type": "table",
       "gridPos": { "x": 12, "y": 26, "w": 12, "h": 6 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
           "refId": "A",
-          "expr": "topk(5, sum by (route) (rate(app_http_request_duration_seconds_count{env=~\"$env\",status_class=\"5xx\"}[5m])) > 0)",
+          "expr": "topk(5, sum by (route) (increase(app_http_request_duration_seconds_count{env=~\"$env\",status_class=\"5xx\"}[$__range])) > 0)",
           "instant": true,
           "format": "table"
         }
