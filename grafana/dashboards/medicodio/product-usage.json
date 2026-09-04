@@ -1,12 +1,18 @@
 {
   "uid": "medicodio-product-usage",
   "title": "Product Usage",
-  "tags": ["medicodio", "analytics"],
+  "tags": [
+    "medicodio",
+    "analytics"
+  ],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 13,
+  "version": 14,
   "refresh": "1m",
-  "time": { "from": "now-7d", "to": "now" },
+  "time": {
+    "from": "now-7d",
+    "to": "now"
+  },
   "templating": {
     "list": [
       {
@@ -15,7 +21,10 @@
         "type": "datasource",
         "query": "postgres",
         "regex": "/^Postgres \\((Dev|Uat|Prod)\\)$/",
-        "current": { "text": "Postgres (Dev)", "value": "postgres_dev" },
+        "current": {
+          "text": "Postgres (Dev)",
+          "value": "postgres_dev"
+        },
         "hide": 0,
         "includeAll": false,
         "multi": false
@@ -24,57 +33,89 @@
         "name": "client",
         "label": "Client",
         "type": "query",
-        "datasource": { "type": "postgres", "uid": "${env_ds}" },
+        "datasource": {
+          "type": "postgres",
+          "uid": "${env_ds}"
+        },
         "query": "SELECT 'All' AS __text, 'All' AS __value UNION ALL SELECT name AS __text, id::text AS __value FROM t_org_clients ORDER BY __text",
         "refresh": 2,
         "includeAll": false,
         "multi": false,
-        "current": { "text": "All", "value": "All" }
+        "current": {
+          "text": "All",
+          "value": "All"
+        }
       },
       {
         "name": "area",
         "label": "Area",
         "type": "query",
-        "datasource": { "type": "postgres", "uid": "${env_ds}" },
+        "datasource": {
+          "type": "postgres",
+          "uid": "${env_ds}"
+        },
         "query": "SELECT 'All' AS __text, 'All' AS __value UNION ALL SELECT DISTINCT area AS __text, area AS __value FROM t_sys_analytics_taxonomy ORDER BY __text",
         "refresh": 2,
         "includeAll": false,
         "multi": false,
-        "current": { "text": "All", "value": "All" }
+        "current": {
+          "text": "All",
+          "value": "All"
+        }
       },
       {
         "name": "feature",
         "label": "Feature",
         "type": "query",
-        "datasource": { "type": "postgres", "uid": "${env_ds}" },
+        "datasource": {
+          "type": "postgres",
+          "uid": "${env_ds}"
+        },
         "query": "SELECT 'All' AS __text, 'All' AS __value UNION ALL SELECT DISTINCT feature AS __text, feature AS __value FROM t_sys_analytics_taxonomy WHERE ('${area}' = 'All' OR area = '${area}') ORDER BY __text",
         "refresh": 2,
         "includeAll": false,
         "multi": false,
-        "current": { "text": "All", "value": "All" }
+        "current": {
+          "text": "All",
+          "value": "All"
+        }
       },
       {
         "name": "sub_feature",
         "label": "Sub-feature",
         "type": "query",
-        "datasource": { "type": "postgres", "uid": "${env_ds}" },
+        "datasource": {
+          "type": "postgres",
+          "uid": "${env_ds}"
+        },
         "query": "SELECT 'All' AS __text, 'All' AS __value UNION ALL SELECT DISTINCT sub_feature AS __text, sub_feature AS __value FROM t_sys_analytics_taxonomy WHERE sub_feature IS NOT NULL AND ('${area}' = 'All' OR area = '${area}') AND ('${feature}' = 'All' OR feature = '${feature}') ORDER BY __text",
         "refresh": 2,
         "includeAll": false,
         "multi": false,
-        "current": { "text": "All", "value": "All" }
+        "current": {
+          "text": "All",
+          "value": "All"
+        }
       },
       {
         "name": "role",
         "label": "Role",
         "type": "query",
-        "datasource": { "type": "postgres", "uid": "${env_ds}" },
+        "datasource": {
+          "type": "postgres",
+          "uid": "${env_ds}"
+        },
         "query": "SELECT DISTINCT role FROM t_analytics_events WHERE $__timeFilter(event_time) ORDER BY role",
         "refresh": 2,
         "includeAll": true,
         "allValue": ".*",
         "multi": true,
-        "current": { "text": "All", "value": ["$__all"] }
+        "current": {
+          "text": "All",
+          "value": [
+            "$__all"
+          ]
+        }
       }
     ]
   },
@@ -84,13 +125,21 @@
       "title": "Most visited areas",
       "description": "Top-level areas ranked by page-visit count. One visit = one route-level entry into the area; internal tab switches within a page do NOT inflate this count (see the Nested tabs panel for those).",
       "type": "barchart",
-      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 9 },
-      "datasource": { "type": "postgres", "uid": "${env_ds}" },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 12,
+        "h": 9
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "${env_ds}"
+      },
       "targets": [
         {
           "refId": "A",
           "format": "table",
-          "rawSql": "SELECT area, COUNT(*)::int AS visits FROM t_analytics_events WHERE $__timeFilter(event_time) AND ('${client}' = 'All' OR client_id::text = '${client}') AND role ~ '^${role:regex}$' AND ('${area}' = 'All' OR area = '${area}') AND ('${feature}' = 'All' OR feature = '${feature}') AND sub_feature IS NULL GROUP BY area ORDER BY visits DESC"
+          "rawSql": "SELECT area, COUNT(*)::int AS visits FROM t_analytics_events WHERE $__timeFilter(event_time) AND ('${client}' = 'All' OR client_id::text = '${client}') AND role ~ '^${role:regex}$' AND ('${area}' = 'All' OR area = '${area}') AND ('${feature}' = 'All' OR feature = '${feature}') AND ('${sub_feature}' = 'All' OR sub_feature = '${sub_feature}') AND sub_feature IS NULL GROUP BY area ORDER BY visits DESC"
         }
       ],
       "options": {
@@ -100,37 +149,60 @@
         "xTickLabelSpacing": 100,
         "barWidth": 0.9,
         "groupWidth": 0.7,
-        "legend": { "showLegend": false }
+        "legend": {
+          "showLegend": false
+        }
       },
-      "fieldConfig": { "defaults": { "unit": "short", "min": 0 } }
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0
+        }
+      }
     },
     {
       "id": 2,
       "title": "Most visited features",
       "description": "Pages / features people actually open, counted as page visits only. Tab switches inside a page do NOT inflate this count.",
       "type": "table",
-      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 9 },
-      "datasource": { "type": "postgres", "uid": "${env_ds}" },
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 12,
+        "h": 9
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "${env_ds}"
+      },
       "targets": [
         {
           "refId": "A",
           "format": "table",
-          "rawSql": "SELECT area || ' → ' || feature AS page, COUNT(*)::int AS visits FROM t_analytics_events WHERE $__timeFilter(event_time) AND ('${client}' = 'All' OR client_id::text = '${client}') AND role ~ '^${role:regex}$' AND ('${area}' = 'All' OR area = '${area}') AND ('${feature}' = 'All' OR feature = '${feature}') AND sub_feature IS NULL GROUP BY area, feature ORDER BY visits DESC LIMIT 25"
+          "rawSql": "SELECT area || ' \u2192 ' || feature AS page, COUNT(*)::int AS visits FROM t_analytics_events WHERE $__timeFilter(event_time) AND ('${client}' = 'All' OR client_id::text = '${client}') AND role ~ '^${role:regex}$' AND ('${area}' = 'All' OR area = '${area}') AND ('${feature}' = 'All' OR feature = '${feature}') AND ('${sub_feature}' = 'All' OR sub_feature = '${sub_feature}') AND sub_feature IS NULL GROUP BY area, feature ORDER BY visits DESC LIMIT 25"
         }
       ]
     },
     {
       "id": 3,
       "title": "Most visited nested tabs (sub-features)",
-      "description": "Deepest level — which tabs inside a feature people actually open. Rows only appear when a sub_feature is recorded.",
+      "description": "Deepest level \u2014 which tabs inside a feature people actually open. Rows only appear when a sub_feature is recorded.",
       "type": "table",
-      "gridPos": { "x": 0, "y": 9, "w": 12, "h": 9 },
-      "datasource": { "type": "postgres", "uid": "${env_ds}" },
+      "gridPos": {
+        "x": 0,
+        "y": 9,
+        "w": 12,
+        "h": 9
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "${env_ds}"
+      },
       "targets": [
         {
           "refId": "A",
           "format": "table",
-          "rawSql": "SELECT area || ' → ' || feature || ' → ' || sub_feature AS tab, COUNT(*)::int AS visits FROM t_analytics_events WHERE $__timeFilter(event_time) AND ('${client}' = 'All' OR client_id::text = '${client}') AND role ~ '^${role:regex}$' AND ('${area}' = 'All' OR area = '${area}') AND ('${feature}' = 'All' OR feature = '${feature}') AND ('${sub_feature}' = 'All' OR sub_feature = '${sub_feature}') AND sub_feature IS NOT NULL GROUP BY area, feature, sub_feature ORDER BY visits DESC LIMIT 25"
+          "rawSql": "SELECT area || ' \u2192 ' || feature || ' \u2192 ' || sub_feature AS tab, COUNT(*)::int AS visits FROM t_analytics_events WHERE $__timeFilter(event_time) AND ('${client}' = 'All' OR client_id::text = '${client}') AND role ~ '^${role:regex}$' AND ('${area}' = 'All' OR area = '${area}') AND ('${feature}' = 'All' OR feature = '${feature}') AND ('${sub_feature}' = 'All' OR sub_feature = '${sub_feature}') AND sub_feature IS NOT NULL GROUP BY area, feature, sub_feature ORDER BY visits DESC LIMIT 25"
         }
       ]
     },
@@ -139,8 +211,16 @@
       "title": "Usage by role",
       "description": "Which roles produce the traffic. Default is all roles across every env; narrow with the Role dropdown above, or set analytics.tracked_roles on a client to opt-out / restrict.",
       "type": "piechart",
-      "gridPos": { "x": 12, "y": 9, "w": 12, "h": 9 },
-      "datasource": { "type": "postgres", "uid": "${env_ds}" },
+      "gridPos": {
+        "x": 12,
+        "y": 9,
+        "w": 12,
+        "h": 9
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "${env_ds}"
+      },
       "targets": [
         {
           "refId": "A",
@@ -150,20 +230,45 @@
       ],
       "options": {
         "pieType": "pie",
-        "legend": { "displayMode": "table", "placement": "right", "values": ["value", "percent"] },
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
-        "tooltip": { "mode": "single" }
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "values": [
+            "value",
+            "percent"
+          ]
+        },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "tooltip": {
+          "mode": "single"
+        }
       },
       "fieldConfig": {
-        "defaults": { "color": { "mode": "palette-classic" } }
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          }
+        }
       },
       "transformations": [
         {
           "id": "rowsToFields",
           "options": {
             "mappings": [
-              { "fieldName": "role", "handlerKey": "field.name" },
-              { "fieldName": "visits", "handlerKey": "field.value" }
+              {
+                "fieldName": "role",
+                "handlerKey": "field.name"
+              },
+              {
+                "fieldName": "visits",
+                "handlerKey": "field.value"
+              }
             ]
           }
         }
@@ -172,25 +277,41 @@
     {
       "id": 5,
       "title": "Usage by client",
-      "description": "One row per client. `active_users` counts distinct user_id in the window — a truer signal of adoption than raw event count.",
+      "description": "One row per client. `active_users` counts distinct user_id in the window \u2014 a truer signal of adoption than raw event count.",
       "type": "table",
-      "gridPos": { "x": 0, "y": 18, "w": 12, "h": 9 },
-      "datasource": { "type": "postgres", "uid": "${env_ds}" },
+      "gridPos": {
+        "x": 0,
+        "y": 18,
+        "w": 12,
+        "h": 9
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "${env_ds}"
+      },
       "targets": [
         {
           "refId": "A",
           "format": "table",
-          "rawSql": "SELECT c.name AS client, COUNT(*)::int AS events, COUNT(DISTINCT ae.user_id)::int AS active_users FROM t_analytics_events ae JOIN t_org_clients c ON c.id = ae.client_id WHERE $__timeFilter(ae.event_time) AND ('${area}' = 'All' OR ae.area = '${area}') AND ('${feature}' = 'All' OR ae.feature = '${feature}') AND ('${sub_feature}' = 'All' OR ae.sub_feature = '${sub_feature}') GROUP BY c.name ORDER BY events DESC"
+          "rawSql": "SELECT c.name AS client, COUNT(*)::int AS events, COUNT(DISTINCT ae.user_id)::int AS active_users FROM t_analytics_events ae JOIN t_org_clients c ON c.id = ae.client_id WHERE $__timeFilter(ae.event_time) AND ('${client}' = 'All' OR ae.client_id::text = '${client}') AND ae.role ~ '^${role:regex}$' AND ('${area}' = 'All' OR ae.area = '${area}') AND ('${feature}' = 'All' OR ae.feature = '${feature}') AND ('${sub_feature}' = 'All' OR ae.sub_feature = '${sub_feature}') GROUP BY c.name ORDER BY events DESC"
         }
       ]
     },
     {
       "id": 6,
       "title": "Zero / low-usage features (last window)",
-      "description": "Every declared taxonomy triplet — area, feature, sub_feature — that recorded ZERO events in the window. LEFT JOIN over t_sys_analytics_taxonomy so page-view rows (sub_feature IS NULL) AND deeper tab rows (sub_feature set) are both accountable. Filter predicates live in the ON clause so the join stays a true LEFT JOIN under narrower time / client / role selections.",
+      "description": "Every declared taxonomy triplet \u2014 area, feature, sub_feature \u2014 that recorded ZERO events in the window. LEFT JOIN over t_sys_analytics_taxonomy so page-view rows (sub_feature IS NULL) AND deeper tab rows (sub_feature set) are both accountable. Filter predicates live in the ON clause so the join stays a true LEFT JOIN under narrower time / client / role selections.",
       "type": "table",
-      "gridPos": { "x": 12, "y": 18, "w": 12, "h": 9 },
-      "datasource": { "type": "postgres", "uid": "${env_ds}" },
+      "gridPos": {
+        "x": 12,
+        "y": 18,
+        "w": 12,
+        "h": 9
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "${env_ds}"
+      },
       "targets": [
         {
           "refId": "A",
@@ -202,15 +323,23 @@
     {
       "id": 7,
       "title": "Area transitions (top flows)",
-      "description": "For each session, the sequence of areas a user moved through. Reveals real navigation paths — where users actually go after landing on an area, not where we intended. Uses LEAD() over session_id ordered by event_time; same-area consecutive events are collapsed. Requires the `netsage-sankey-panel` plugin (installed via docker-compose GF_INSTALL_PLUGINS).",
+      "description": "For each session, the sequence of areas a user moved through. Reveals real navigation paths \u2014 where users actually go after landing on an area, not where we intended. Uses LEAD() over session_id ordered by event_time; same-area consecutive events are collapsed. Requires the `netsage-sankey-panel` plugin (installed via docker-compose GF_INSTALL_PLUGINS).",
       "type": "netsage-sankey-panel",
-      "gridPos": { "x": 0, "y": 27, "w": 24, "h": 11 },
-      "datasource": { "type": "postgres", "uid": "${env_ds}" },
+      "gridPos": {
+        "x": 0,
+        "y": 27,
+        "w": 24,
+        "h": 11
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "${env_ds}"
+      },
       "targets": [
         {
           "refId": "A",
           "format": "table",
-          "rawSql": "WITH ordered AS (SELECT session_id, area, event_time, LEAD(area) OVER (PARTITION BY session_id ORDER BY event_time) AS next_area FROM t_analytics_events WHERE $__timeFilter(event_time) AND ('${client}' = 'All' OR client_id::text = '${client}') AND role ~ '^${role:regex}$' AND ('${area}' = 'All' OR area = '${area}') AND ('${feature}' = 'All' OR feature = '${feature}')) SELECT area AS source, next_area AS target, COUNT(*)::int AS value FROM ordered WHERE next_area IS NOT NULL AND area <> next_area GROUP BY 1, 2 ORDER BY value DESC LIMIT 25"
+          "rawSql": "WITH ordered AS (SELECT session_id, area, event_time, LEAD(area) OVER (PARTITION BY session_id ORDER BY event_time) AS next_area FROM t_analytics_events WHERE $__timeFilter(event_time) AND ('${client}' = 'All' OR client_id::text = '${client}') AND role ~ '^${role:regex}$' AND ('${area}' = 'All' OR area = '${area}') AND ('${feature}' = 'All' OR feature = '${feature}') AND ('${sub_feature}' = 'All' OR sub_feature = '${sub_feature}')) SELECT area AS source, next_area AS target, COUNT(*)::int AS value FROM ordered WHERE next_area IS NOT NULL AND area <> next_area GROUP BY 1, 2 ORDER BY value DESC LIMIT 25"
         }
       ],
       "options": {
@@ -222,16 +351,24 @@
     },
     {
       "id": 8,
-      "title": "Peak hours — hour × weekday",
-      "description": "When users actually work. Rows = weekday (Mon → Sun), columns = hour-of-day in the tenant's browser timezone. Deeper colour = more events. Use to time cron jobs, deploys, maintenance windows. Requires the `marcusolsson-hourly-heatmap-panel` plugin (installed via docker-compose GF_INSTALL_PLUGINS) — Grafana's native heatmap only supports time on the X axis and cannot render a real hour-of-day × day-of-week grid.",
+      "title": "Peak hours \u2014 hour \u00d7 weekday",
+      "description": "When users actually work. Rows = weekday (Mon \u2192 Sun), columns = hour-of-day in the tenant's browser timezone. Deeper colour = more events. Use to time cron jobs, deploys, maintenance windows. Requires the `marcusolsson-hourly-heatmap-panel` plugin (installed via docker-compose GF_INSTALL_PLUGINS) \u2014 Grafana's native heatmap only supports time on the X axis and cannot render a real hour-of-day \u00d7 day-of-week grid.",
       "type": "marcusolsson-hourly-heatmap-panel",
-      "gridPos": { "x": 0, "y": 38, "w": 24, "h": 11 },
-      "datasource": { "type": "postgres", "uid": "${env_ds}" },
+      "gridPos": {
+        "x": 0,
+        "y": 38,
+        "w": 24,
+        "h": 11
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "${env_ds}"
+      },
       "targets": [
         {
           "refId": "A",
           "format": "time_series",
-          "rawSql": "SELECT date_trunc('hour', event_time) AS time, COUNT(*)::int AS value FROM t_analytics_events WHERE $__timeFilter(event_time) AND ('${client}' = 'All' OR client_id::text = '${client}') AND role ~ '^${role:regex}$' AND ('${area}' = 'All' OR area = '${area}') AND ('${feature}' = 'All' OR feature = '${feature}') GROUP BY 1 ORDER BY 1"
+          "rawSql": "SELECT date_trunc('hour', event_time) AS time, COUNT(*)::int AS value FROM t_analytics_events WHERE $__timeFilter(event_time) AND ('${client}' = 'All' OR client_id::text = '${client}') AND role ~ '^${role:regex}$' AND ('${area}' = 'All' OR area = '${area}') AND ('${feature}' = 'All' OR feature = '${feature}') AND ('${sub_feature}' = 'All' OR sub_feature = '${sub_feature}') GROUP BY 1 ORDER BY 1"
         }
       ],
       "options": {
