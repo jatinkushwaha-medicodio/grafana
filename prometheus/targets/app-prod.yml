@@ -3,7 +3,7 @@
 # must match PROD_METRICS_TOKEN.
 
 - targets:
-    - "REPLACE_ME.azurecontainerapps.io"
+    - "nextgen-app.medicodio.ai:443"
   labels:
     env: prod
     service: app

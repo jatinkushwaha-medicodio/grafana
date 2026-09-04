@@ -21,7 +21,11 @@ groups:
             model:
               refId: A
               editorMode: code
-              expr: 'sum by (env) (rate(app_http_request_duration_seconds_count{status_class="5xx"}[5m]))'
+              # Fires on PROD only. dev + uat backends are noisy by design
+              # (dev churn, coder QA runs, seed reloads) and pre-prod 5xx
+              # spikes have historically been false positives that trained
+              # on-call to ignore the channel.
+              expr: 'sum by (env) (rate(app_http_request_duration_seconds_count{status_class="5xx", env!~"dev|uat"}[5m]))'
               instant: true
               range: false
               intervalMs: 1000
@@ -63,7 +67,10 @@ groups:
             model:
               refId: A
               editorMode: code
-              expr: 'up{job=~"app-.*"}'
+              # PROD only. dev + uat are single-VM containers that we
+              # routinely restart during deploys / seeds; a paged "API DOWN"
+              # in those envs is expected and noisy.
+              expr: 'up{job=~"app-.*", job!~"app-(dev|uat)"}'
               instant: true
               range: false
               intervalMs: 1000
